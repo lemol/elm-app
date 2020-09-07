@@ -108,5 +108,5 @@ public
 dist
 
 src/Main/index.js
-src/Native/index.js
-src/Native/cli.js
+native/index.js
+native/cli.js

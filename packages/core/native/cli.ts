@@ -2,7 +2,7 @@ import * as path from "path";
 import meow from "meow";
 import { buildApp } from "./";
 
-const version = require("../../package.json")["version"];
+const version = require("../package.json")["version"];
 
 const cli = meow(
   `

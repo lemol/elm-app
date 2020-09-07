@@ -39,6 +39,10 @@ export function buildApp({ projectPath, watch, outputDir }: Options) {
     });
   });
 
+  program.ports.printError.subscribe(async (error) => {
+    console.log(error);
+  });
+
   if (watch) {
     console.log(`${chalk.bgGreenBright("watching...")}`);
 
@@ -72,6 +76,25 @@ export function buildApp({ projectPath, watch, outputDir }: Options) {
 
   //   program.ports.readSourcePaths.send(files);
   // }
+
+  getSourceCode();
+
+  function getSourceCode() {
+    const pattern = `{${watchFiles.map((x) => "/" + x).join(",")}}`;
+
+    const files = glob
+      .sync(pattern, {
+        sync: true,
+        ignore: [`/${distRelative}/**`],
+        root,
+      })
+      .map((x) => path.relative(root, x));
+
+    console.log(`${chalk.underline.bgBlue("Read files:")}`);
+    console.log(`${files.join("\n")}`);
+
+    readSourceCode(files[0]);
+  }
 
   function readSourceCode(filePath: string) {
     const contents = fs.readFileSync(path.join(root, filePath)).toString();
