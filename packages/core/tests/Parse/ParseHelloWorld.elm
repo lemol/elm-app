@@ -1,4 +1,4 @@
-module ParseHelloWorld exposing (..)
+module Parse.ParseHelloWorld exposing (..)
 
 import ElmApp.Module as Module exposing (View(..))
 import ElmApp.Parser

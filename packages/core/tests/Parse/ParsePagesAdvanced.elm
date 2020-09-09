@@ -1,4 +1,4 @@
-module ParsePagesAdvanced exposing (..)
+module Parse.ParsePagesAdvanced exposing (..)
 
 import ElmApp.Parser
 import Expect

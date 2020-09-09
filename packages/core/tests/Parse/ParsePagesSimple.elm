@@ -1,4 +1,4 @@
-module ParsePagesSimple exposing (..)
+module Parse.ParsePagesSimple exposing (..)
 
 import Expect
 import Parser

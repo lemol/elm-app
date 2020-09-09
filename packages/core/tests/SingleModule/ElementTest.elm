@@ -1,28 +1,39 @@
-module ParseCounterAsync exposing (..)
+module SingleModule.ElementTest exposing (..)
 
 import Elm.CodeGen exposing (tupleAnn)
+import Elm.Pretty
 import ElmApp.Module as Module exposing (Init(..), Model(..), Msg(..), Subscriptions(..), Update(..), View(..))
-import ElmApp.Parser
+import ElmApp.SingleModule.ElementMainModule as ElementMainModule
 import ElmCodeGenUtils exposing (typeSimple, typedConcreteSimple)
 import Expect
 import Test exposing (..)
-import Utils exposing (clearModuleNodeRange)
+
+
+elementMain : String
+elementMain =
+    """module App.Main exposing (main)
+
+import Browser
+import Main
+
+
+main : Program () Main.Model Main.Msg
+main =
+    Browser.element
+        { init = always Main.init, update = Main.update, view = Main.view, subscriptions = Main.subscriptions }
+"""
 
 
 suite : Test
 suite =
-    describe "Single Page: CounterAsync"
-        [ test "with Msg -> Model -> (Model, Cmd Msg)" <|
+    describe "SingleModule: Element"
+        [ test "elementMain" <|
             \_ ->
                 let
-                    result =
-                        ElmApp.Parser.parseModule mainFile
-                            |> Result.map clearModuleNodeRange
-
                     modelCmd =
                         tupleAnn [ typeSimple "Model", typedConcreteSimple "Cmd" "Msg" ]
 
-                    expected =
+                    module_ =
                         Module.build [ "Main" ]
                             |> Module.withModel
                                 (Model1 "Model")
@@ -36,81 +47,11 @@ suite =
                                 (Subscriptions_Model_Sub "subscriptions" (typeSimple "Model") (typedConcreteSimple "Sub" "Msg"))
                             |> Module.withView
                                 (View_Model_Document "view" (typeSimple "Model") (typedConcreteSimple "Html" "Msg"))
+
+                    expected =
+                        elementMain
                 in
-                result
+                ElementMainModule.write module_
+                    |> Result.map (Elm.Pretty.pretty 120)
                     |> Expect.equal (Ok expected)
         ]
-
-
-mainFile : String
-mainFile =
-    """
-module Main exposing (Model, Msg, subscriptions, update, view, init)
-
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
-import Time
-
-
-
--- MODEL
-
-
-type alias Model =
-    Int
-
-
-init : ( Model, Cmd Msg )
-init =
-    ( 0
-    , Cmd.none
-    )
-
-
--- MESSAGES
-
-
-type Msg
-    = Increment
-    | Reset
-
-
-
--- UPDATE
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        Increment ->
-            ( model + 1
-            , Cmd.none
-            )
-
-        Reset ->
-            ( 0
-            , Cmd.none
-            )
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Time.every 1000 (always Increment)
-
-
-
--- VIEW
-
-
-view : Model -> Html Msg
-view model =
-    div
-        []
-        [ text (String.fromInt model)
-        , button
-            [ onClick Reset
-            ]
-            [ text "reset"
-            ]
-        ]
-"""

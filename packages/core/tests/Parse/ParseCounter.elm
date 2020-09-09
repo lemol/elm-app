@@ -1,4 +1,4 @@
-module ParseCounter exposing (..)
+module Parse.ParseCounter exposing (..)
 
 import ElmApp.Module as Module exposing (Init(..), Model(..), Msg(..), Update(..), View(..))
 import ElmApp.Parser
