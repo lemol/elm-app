@@ -1,9 +1,8 @@
 module SingleModule.ElementTest exposing (..)
 
 import Elm.CodeGen exposing (tupleAnn)
-import Elm.Pretty
 import ElmApp.Module as Module exposing (Init(..), Model(..), Msg(..), Subscriptions(..), Update(..), View(..))
-import ElmApp.SingleModule.ElementMainModule as ElementMainModule
+import ElmApp.SingleModule as SingleModule
 import ElmCodeGenUtils exposing (typeSimple, typedConcreteSimple)
 import Expect
 import Test exposing (..)
@@ -42,16 +41,15 @@ suite =
                             |> Module.withMsg
                                 (Msg1 "Msg")
                             |> Module.withUpdate
-                                (Update_Msg_Model_Model "update" (typeSimple "Msg") (typeSimple "Model") modelCmd)
+                                (Update_Msg_Model_ModelCmd "update" (typeSimple "Msg") (typeSimple "Model") modelCmd)
                             |> Module.withSubscriptions
                                 (Subscriptions_Model_Sub "subscriptions" (typeSimple "Model") (typedConcreteSimple "Sub" "Msg"))
                             |> Module.withView
                                 (View_Model_Document "view" (typeSimple "Model") (typedConcreteSimple "Html" "Msg"))
 
                     expected =
-                        elementMain
+                        ( "Main.elm", elementMain )
                 in
-                ElementMainModule.write module_
-                    |> Result.map (Elm.Pretty.pretty 120)
+                SingleModule.write module_
                     |> Expect.equal (Ok expected)
         ]

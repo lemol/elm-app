@@ -1,6 +1,6 @@
 module ElmApp.Parser exposing (parseModule)
 
-import Elm.CodeGen exposing (File)
+import Elm.CodeGen exposing (File, tupleAnn)
 import Elm.DSLParser
 import Elm.Syntax.Module as ESModule
 import Elm.Syntax.Node as Node exposing (Node(..))
@@ -220,6 +220,9 @@ parseUpdate { file, result } =
 fromUpdateDeclaration : String -> TypeAnnotation -> Update
 fromUpdateDeclaration name ann =
     case ann of
+        FunctionTypeAnnotation msg (Node _ (FunctionTypeAnnotation model (Node _ (Tupled [ Node _ model2, Node _ cmd ])))) ->
+            Update_Msg_Model_ModelCmd name (Node.value msg) (Node.value model) (tupleAnn [ model2, cmd ])
+
         FunctionTypeAnnotation msg (Node _ (FunctionTypeAnnotation model model2)) ->
             Update_Msg_Model_Model name (Node.value msg) (Node.value model) (Node.value model2)
 

@@ -1,9 +1,8 @@
 module SingleModule.SandboxTest exposing (..)
 
-import Elm.Pretty
 import ElmApp.Module as Module exposing (Init(..), Model(..), Msg(..), Update(..), View(..))
-import ElmApp.SingleModule.SandboxMainModule as SandboxMainModule
-import ElmCodeGenUtils exposing (typeSimple, typedConcreteSimple, typedGeneric)
+import ElmApp.SingleModule as SingleModule
+import ElmCodeGenUtils exposing (typeSimple, typedConcreteSimple)
 import Expect
 import Test exposing (..)
 
@@ -42,9 +41,8 @@ suite =
                                 (View_Model_Document "view" (typeSimple "Model") (typedConcreteSimple "Html" "Msg"))
 
                     expected =
-                        sandboxMain
+                        ( "Main.elm", sandboxMain )
                 in
-                SandboxMainModule.write module_
-                    |> Result.map (Elm.Pretty.pretty 120)
+                SingleModule.write module_
                     |> Expect.equal (Ok expected)
         ]

@@ -6,6 +6,7 @@ import ElmApp.Error exposing (Error, notImplemented)
 import ElmApp.Module exposing (Module)
 import ElmApp.ModuleType exposing (ModuleType(..), detect)
 import ElmApp.Parser as Parser
+import ElmApp.SingleModule.ElementMainModule as ElementMainModule
 import ElmApp.SingleModule.JustViewMainModule as JustViewMainModule
 import ElmApp.SingleModule.SandboxMainModule as SandboxMainModule
 
@@ -29,6 +30,9 @@ write context =
 
                 Sandbox ->
                     SandboxMainModule.write context
+
+                Element ->
+                    ElementMainModule.write context
 
                 _ ->
                     Err notImplemented

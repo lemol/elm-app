@@ -1,8 +1,7 @@
 module SingleModule.JustViewTest exposing (..)
 
-import Elm.Pretty
 import ElmApp.Module as Module exposing (View(..))
-import ElmApp.SingleModule.JustViewMainModule as JustViewMainModule
+import ElmApp.SingleModule as SingleModule
 import ElmCodeGenUtils exposing (typedGeneric)
 import Expect
 import Test exposing (..)
@@ -48,10 +47,9 @@ suite =
                                 (View_Document "view" (typedGeneric "Html" "msg"))
 
                     expected =
-                        withViewExposed
+                        ( "Main.elm", withViewExposed )
                 in
-                JustViewMainModule.write "view" module_
-                    |> Result.map (Elm.Pretty.pretty 120)
+                SingleModule.write module_
                     |> Expect.equal (Ok expected)
         , test "withMainExposed" <|
             \_ ->
@@ -62,9 +60,8 @@ suite =
                                 (View_Document "main" (typedGeneric "Html" "msg"))
 
                     expected =
-                        withMainExposed
+                        ( "Main.elm", withMainExposed )
                 in
-                JustViewMainModule.write "main" module_
-                    |> Result.map (Elm.Pretty.pretty 120)
+                SingleModule.write module_
                     |> Expect.equal (Ok expected)
         ]

@@ -47,6 +47,9 @@ clearUpdateNodeRange update =
         Update_Msg_Model_Model n ta1 ta2 ta3 ->
             Update_Msg_Model_Model n (clearTypeAnnotationNodeRange ta1) (clearTypeAnnotationNodeRange ta2) (clearTypeAnnotationNodeRange ta3)
 
+        Update_Msg_Model_ModelCmd n ta1 ta2 ta3 ->
+            Update_Msg_Model_ModelCmd n (clearTypeAnnotationNodeRange ta1) (clearTypeAnnotationNodeRange ta2) (clearTypeAnnotationNodeRange ta3)
+
         _ ->
             update
 

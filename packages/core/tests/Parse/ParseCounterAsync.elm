@@ -31,7 +31,7 @@ suite =
                             |> Module.withMsg
                                 (Msg1 "Msg")
                             |> Module.withUpdate
-                                (Update_Msg_Model_Model "update" (typeSimple "Msg") (typeSimple "Model") modelCmd)
+                                (Update_Msg_Model_ModelCmd "update" (typeSimple "Msg") (typeSimple "Model") modelCmd)
                             |> Module.withSubscriptions
                                 (Subscriptions_Model_Sub "subscriptions" (typeSimple "Model") (typedConcreteSimple "Sub" "Msg"))
                             |> Module.withView
