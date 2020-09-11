@@ -4,8 +4,8 @@ import Elm.CodeGen exposing (..)
 import ElmApp.Error exposing (Error)
 import ElmApp.Module exposing (DocumentInfo(..), Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
-import ElmApp.Spa exposing (init)
 import ElmApp.Spa.PagesModule exposing (pushUrlDecl)
+import ElmApp.Spa.Utils as Utils exposing (..)
 
 
 write : { documentInfo : DocumentInfo } -> Result Error File
@@ -50,6 +50,7 @@ write opts =
             , modelDecl
             , msgDecl
             , initDecl
+            , updateDecl
             ]
     in
     Ok file_
@@ -60,9 +61,9 @@ mainDecl =
     funDecl Nothing
         (Just
             (typed "Program"
-                [ typed "Flags" []
-                , typed "Model" []
-                , typed "Msg" []
+                [ flagsTA
+                , modelTA
+                , msgTA
                 ]
             )
         )
@@ -116,12 +117,12 @@ initDecl : Declaration
 initDecl =
     funDecl Nothing
         (Just
-            (funAnn (typed "Flags" [])
+            (funAnn flagsTA
                 (funAnn (fqTyped [ "Url" ] "Url" [])
                     (funAnn (fqTyped [ "Navigation" ] "Key" [])
                         (tupleAnn
-                            [ typed "Model" []
-                            , typed "Cmd" [ typed "Msg" [] ]
+                            [ modelTA
+                            , cmdMsgTA
                             ]
                         )
                     )
@@ -136,43 +137,94 @@ initDecl =
         (letExpr
             [ letFunction "router"
                 []
-                (access (val "model") "router")
+                (modelAccess "router")
             , letFunction "route"
                 []
                 (apply [ fun "parseUrl", val "url" ])
-            , letFunction "newApp"
+            , letFunction "newRouter"
                 []
                 (update "router" [ ( "route", val "route" ) ])
             , letFunction "bag"
                 []
                 (record
-                    [ ( "global", access (val "model") "global" )
-                    , ( "router", val "newApp" )
+                    [ ( "global", modelAccess "global" )
+                    , ( "router", val "newRouter" )
                     ]
                 )
             , letDestructuring
                 (tuplePattern [ varPattern "newPage", varPattern "newPageCmd" ])
-                (apply [ fqFun [ "Page" ] "enterRoute", val "bag", access (val "model") "page", val "route" ])
+                (apply [ fqFun [ "Page" ] "enterRoute", val "bag", modelAccess "page", val "route" ])
             ]
             (tuple
-                [ val "model"
-                , apply
-                    [ fqFun [ "Cmd" ] "batch"
-                    , list
-                        [ apply
-                            [ fqFun [ "Cmd" ] "map"
-                            , construct "GlobalMsg" []
-                            , val "globalCmd"
-                            ]
-                        , apply
-                            [ fqFun [ "Cmd" ] "map"
-                            , construct "PageMsg" []
-                            , val "newPageCmd"
-                            ]
-                        ]
+                [ modelVal
+                , cmdBatch
+                    [ cmdMap "PageMsg" (val "newPageCmd")
                     ]
                 ]
             )
+        )
+
+
+updateDecl : Declaration
+updateDecl =
+    Utils.updateDecl
+        (caseExpr msgVal
+            [ ( namedPattern "LinkClicked" [ varPattern "urlRequest" ]
+              , caseExpr (val "urlRequest")
+                    [ ( namedPattern "Browser.Internal" [ varPattern "url" ]
+                      , tuple
+                            [ modelVal
+                            , apply
+                                [ fqFun [ "Navigation" ] "pushUrl"
+                                , access (access modelVal "router") "navigationKey"
+                                , apply
+                                    [ fqFun [ "Url" ] "toString", val "url" ]
+                                    |> parens
+                                ]
+                            ]
+                      )
+                    , ( namedPattern "Browser.External" [ varPattern "href" ]
+                      , tuple
+                            [ modelVal
+                            , apply
+                                [ fqFun [ "Navigation" ] "load"
+                                , val "href"
+                                ]
+                            ]
+                      )
+                    ]
+              )
+            , ( namedPattern "UrlChanged" [ varPattern "url" ]
+              , letExpr
+                    [ letFunction "router" [] (modelAccess "router")
+                    , letFunction "route"
+                        []
+                        (apply [ fun "parseUrl", val "url" ])
+                    , letFunction "newRouter"
+                        []
+                        (update "router" [ ( "route", val "route" ) ])
+                    , letFunction "bag"
+                        []
+                        (record
+                            [ ( "router", val "newRouter" )
+                            ]
+                        )
+                    , letDestructuring
+                        (tuplePattern [ varPattern "newPage", varPattern "newPageCmd" ])
+                        (apply [ fqFun [ "Page" ] "enterRoute", val "bag", modelAccess "page", val "route" ])
+                    ]
+                    (tuple
+                        [ update "model"
+                            [ ( "page", val "newPage" )
+                            , ( "router", val "newRouter" )
+                            ]
+                        , cmdBatch
+                            [ cmdMap "PageMsg" (val "newPageCmd")
+                            ]
+                        ]
+                    )
+              )
+            ]
         )
 
 
