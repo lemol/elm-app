@@ -13,6 +13,7 @@
             "elm/parser": "1.1.0",
             "elm-community/list-extra": "8.2.3",
             "elm-community/maybe-extra": "5.1.0",
+            "elm-community/result-extra": "2.4.0",
             "elm-community/string-extra": "4.0.1",
             "stil4m/elm-syntax": "7.1.1",
             "the-sett/elm-syntax-dsl": "5.0.0"
