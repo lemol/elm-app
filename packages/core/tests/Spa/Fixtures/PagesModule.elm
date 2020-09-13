@@ -17,9 +17,7 @@ async =
 
 pushUrl : AppUrl -> Cmd msg
 pushUrl url =
-    Navigation.pushUrl
-        (Router.urlKey url)
-        (Router.toPath (Router.urlRoute url))
+    Navigation.pushUrl (Router.urlKey url) (Router.toPath (Router.urlRoute url))
 
 
 type Page

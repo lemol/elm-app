@@ -1,11 +1,13 @@
 module ElmApp.Spa.MainModule exposing (..)
 
 import Elm.CodeGen exposing (..)
+import Elm.Syntax.Expression exposing (Expression)
 import ElmApp.Error exposing (Error)
 import ElmApp.Module exposing (DocumentInfo(..), Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
 import ElmApp.Spa.PagesModule exposing (pushUrlDecl)
 import ElmApp.Spa.Utils as Utils exposing (..)
+import Html.Attributes exposing (name)
 
 
 write : { documentInfo : DocumentInfo } -> Result Error File
@@ -51,6 +53,8 @@ write opts =
             , msgDecl
             , initDecl
             , updateDecl
+            , subscriptionsDecl
+            , viewDecl opts.documentInfo
             ]
     in
     Ok file_
@@ -95,8 +99,9 @@ modelDecl =
         []
         (recordAnn
             [ ( "router", fqTyped [ "Router" ] "Model" [] )
-            , ( "global", fqTyped [ "Global" ] "Model" [] )
-            , ( "Page", fqTyped [ "Page" ] "Model" [] )
+
+            --, ( "global", fqTyped [ "Global" ] "Model" [] )
+            , ( "page", fqTyped [ "Page" ] "Model" [] )
             ]
         )
 
@@ -104,11 +109,12 @@ modelDecl =
 msgDecl : Declaration
 msgDecl =
     customTypeDecl Nothing
-        "Model"
+        "Msg"
         []
         [ ( "LinkClicked", [ fqTyped [ "Browser" ] "UrlRequest" [] ] )
         , ( "UrlChanged", [ fqTyped [ "Url" ] "Url" [] ] )
-        , ( "GlobalMsg", [ fqTyped [ "Page" ] "Msg" [] ] )
+
+        --, ( "GlobalMsg", [ fqTyped [ "Page" ] "Msg" [] ] )
         , ( "PageMsg", [ fqTyped [ "Page" ] "Msg" [] ] )
         ]
 
@@ -135,25 +141,33 @@ initDecl =
         , varPattern "key"
         ]
         (letExpr
-            [ letFunction "router"
-                []
-                (modelAccess "router")
-            , letFunction "route"
+            [ letFunction "route"
                 []
                 (apply [ fun "parseUrl", val "url" ])
-            , letFunction "newRouter"
+            , letFunction "router"
                 []
-                (update "router" [ ( "route", val "route" ) ])
+                (apply
+                    [ fqFun [ "Router" ] "init"
+                    , val "key"
+                    , val "route"
+                    ]
+                )
             , letFunction "bag"
                 []
                 (record
-                    [ ( "global", modelAccess "global" )
-                    , ( "router", val "newRouter" )
+                    [ ( "router", val "router" )
                     ]
                 )
             , letDestructuring
                 (tuplePattern [ varPattern "newPage", varPattern "newPageCmd" ])
-                (apply [ fqFun [ "Page" ] "enterRoute", val "bag", modelAccess "page", val "route" ])
+                (apply [ fqFun [ "Page" ] "init", val "bag", val "route" ])
+            , letFunction "model"
+                []
+                (record
+                    [ ( "router", val "router" )
+                    , ( "page", val "newPage" )
+                    ]
+                )
             ]
             (tuple
                 [ modelVal
@@ -224,7 +238,86 @@ updateDecl =
                         ]
                     )
               )
+            , ( namedPattern "PageMsg" [ varPattern "subMsg" ]
+              , letExpr
+                    [ letFunction "bag"
+                        []
+                        (record
+                            [ ( "router", modelAccess "router" )
+                            ]
+                        )
+                    , letDestructuring
+                        (tuplePattern [ varPattern "newPage", varPattern "newPageCmd" ])
+                        (apply [ fqFun [ "Page" ] "update", val "bag", val "subMsg", modelAccess "page" ])
+                    ]
+                    (tuple
+                        [ update "model"
+                            [ ( "page", val "newPage" )
+                            ]
+                        , cmdBatch
+                            [ cmdMap "PageMsg" (val "newPageCmd")
+                            ]
+                        ]
+                    )
+              )
             ]
+        )
+
+
+subscriptionsDecl : Declaration
+subscriptionsDecl =
+    funDecl Nothing
+        (Just
+            (funAnn modelTA subMsgTA)
+        )
+        "subscriptions"
+        [ varPattern "model"
+        ]
+        (subBatch
+            [ subMap "PageMsg"
+                (apply
+                    [ fqFun [ "Page" ] "subscriptions"
+                    , modelAccess "page"
+                    ]
+                    |> parens
+                )
+            ]
+        )
+
+
+viewDecl : DocumentInfo -> Declaration
+viewDecl docInfo =
+    funDecl Nothing
+        (Just
+            (funAnn modelTA
+                (fqTyped [ "Browser" ] "Document" [ typed "Msg" [] ])
+            )
+        )
+        "view"
+        [ varPattern "model"
+        ]
+        (letExpr
+            [ letFunction "bag"
+                []
+                (record
+                    [ ( "router", modelAccess "router" ) ]
+                )
+            ]
+            (pipe
+                (apply
+                    [ fqFun [ "Page" ] "view"
+                    , val "bag"
+                    , modelAccess "page"
+                    ]
+                )
+                [ apply
+                    ([ documentMap docInfo
+                     , construct "PageMsg" []
+                     ]
+                        ++ documentToBrowser docInfo
+                    )
+                ]
+            )
         )
 
 
@@ -236,7 +329,30 @@ documentImports : DocumentInfo -> List Import
 documentImports info =
     case info of
         DocumentModule name ->
-            [ importStmt name (Just [ "Document" ]) Nothing ]
+            [ importStmt name Nothing Nothing ]
 
         DocumentModuleCustom name _ _ ->
-            [ importStmt name (Just [ "Document" ]) Nothing ]
+            [ importStmt name Nothing Nothing ]
+
+
+documentMap : DocumentInfo -> Expression
+documentMap info =
+    case info of
+        DocumentModule name ->
+            fqFun name "map"
+
+        DocumentModuleCustom name map _ ->
+            fqFun name map
+
+
+documentToBrowser : DocumentInfo -> List Expression
+documentToBrowser info =
+    case info of
+        DocumentModule [ "Html" ] ->
+            []
+
+        DocumentModule name ->
+            [ fqFun name "toBrowserDocument" ]
+
+        DocumentModuleCustom name _ toBrowser ->
+            [ fqFun name toBrowser ]

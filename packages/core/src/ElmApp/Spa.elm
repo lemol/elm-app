@@ -16,7 +16,7 @@ import ElmApp.Error exposing (Error)
 import ElmApp.Module exposing (DocumentInfo, Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
 import ElmApp.Parser as Parser
-import ElmApp.Spa.MainModule as MainModule exposing (flagsDecl)
+import ElmApp.Spa.MainModule as MainModule
 import ElmApp.Spa.PagesModule as PagesModule
 import Result.Extra
 
@@ -119,4 +119,4 @@ writeAll fs =
         |> List.map (\( fn, ff ) -> ff |> Result.map (Tuple.pair fn))
         -- List (Result Error (String, File))
         |> Result.Extra.combine
-        |> Result.map (List.map <| Tuple.mapSecond (Elm.Pretty.pretty 50))
+        |> Result.map (List.map <| Tuple.mapSecond (Elm.Pretty.pretty 120))

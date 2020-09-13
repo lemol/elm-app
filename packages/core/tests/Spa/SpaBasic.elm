@@ -1,13 +1,12 @@
 module Spa.SpaBasic exposing (..)
 
-import Elm.CodeGen exposing (tupleAnn)
 import ElmApp.Error as Error exposing (Error)
-import ElmApp.Module as Module exposing (DocumentInfo(..), Init(..), Model(..), Msg(..), Subscriptions(..), Update(..), View(..))
+import ElmApp.Module exposing (DocumentInfo(..), Init(..), Model(..), Msg(..), Subscriptions(..), Update(..), View(..))
 import ElmApp.Spa as Spa exposing (Context)
-import ElmCodeGenUtils exposing (typeSimple, typedConcreteSimple)
 import Expect
 import List.Extra
 import Spa.Fixtures.BasicPages as BasicPages
+import Spa.Fixtures.MainModule as MainModule
 import Spa.Fixtures.PagesModule as PagesModule
 import Test exposing (..)
 
@@ -47,4 +46,8 @@ suite =
             \_ ->
                 getFile "App/Pages.elm"
                     |> Expect.equal (Ok PagesModule.content)
+        , test "MainModule" <|
+            \_ ->
+                getFile "App/Main.elm"
+                    |> Expect.equal (Ok MainModule.content)
         ]

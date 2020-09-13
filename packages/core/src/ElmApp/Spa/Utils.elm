@@ -59,6 +59,42 @@ cmdBatch items =
 
 
 
+-- SUBSCRIPRIONS
+
+
+subMsgGenericTA : TypeAnnotation
+subMsgGenericTA =
+    typed "Sub" [ typeVar "msg" ]
+
+
+subMsgTA : TypeAnnotation
+subMsgTA =
+    typed "Sub" [ typeVar "Msg" ]
+
+
+subCustomTA : TypeAnnotation -> TypeAnnotation
+subCustomTA msg =
+    typed "Sub" [ msg ]
+
+
+subMap : String -> Expression -> Expression
+subMap toMsg expr =
+    apply
+        [ fqFun [ "Sub" ] "map"
+        , construct toMsg []
+        , expr
+        ]
+
+
+subBatch : List Expression -> Expression
+subBatch items =
+    apply
+        [ fqFun [ "Sub" ] "batch"
+        , list items
+        ]
+
+
+
 -- MODEL
 
 

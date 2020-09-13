@@ -1,15 +1,15 @@
 module Spa.Fixtures.MainModule exposing (..)
 
 
-file : String
-file =
+content : String
+content =
     """module App.Main exposing (main)
 
-import App.Pages.Document as Document
-import App.Pages.Internal.Router as Router exposing (parseUrl)
+import App.Pages.Internal.Router as Router
 import App.Pages.Main as Page
 import Browser
 import Browser.Navigation as Navigation
+import Html
 import Url
 
 
@@ -30,9 +30,7 @@ type alias Flags =
 
 
 type alias Model =
-    { router : Router.Model
-    , page : Page.Model
-    }
+    { router : Router.Model, page : Page.Model }
 
 
 type Msg
@@ -47,26 +45,19 @@ init _ url key =
         route =
             parseUrl url
 
-        appModel =
+        router =
             Router.init key route
 
         bag =
-            { router = appModel
-            }
+            { router = router }
 
-        ( pageModel, pageCmd ) =
+        ( newPage, newPageCmd ) =
             Page.init bag route
 
         model =
-            { router = appModel
-            , page = pageModel
-            }
+            { router = router, page = newPage }
     in
-    ( model
-    , Cmd.batch
-        [ Cmd.map GlobalMsg globalCmd
-        ]
-    )
+    ( model, Cmd.batch [ Cmd.map PageMsg newPageCmd ] )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -75,16 +66,10 @@ update msg model =
         LinkClicked urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
-                    ( model
-                    , Navigation.pushUrl
-                        model.router.navigationKey
-                        (Url.toString url)
-                    )
+                    ( model, Navigation.pushUrl model.router.navigationKey (Url.toString url) )
 
                 Browser.External href ->
-                    ( model
-                    , Navigation.load href
-                    )
+                    ( model, Navigation.load href )
 
         UrlChanged url ->
             let
@@ -98,44 +83,34 @@ update msg model =
                     { router | route = route }
 
                 bag =
-                    { router = newApp
-                    }
+                    { router = newRouter }
 
                 ( newPage, newPageCmd ) =
                     Page.enterRoute bag model.page route
             in
-            ( { model | page = newPage, router = newRouter }
-            , Cmd.batch [ Cmd.map PageMsg newPageCmd ]
-            )
+            ( { model | page = newPage, router = newRouter }, Cmd.batch [ Cmd.map PageMsg newPageCmd ] )
 
         PageMsg subMsg ->
             let
                 bag =
-                    { global = model.global
-                    , router = model.router
-                    }
+                    { router = model.router }
 
                 ( newPage, newPageCmd ) =
                     Page.update bag subMsg model.page
             in
-            ( { model | page = newPage }
-            , Cmd.batch
-                [ Cmd.map PageMsg newPageCmd
-                ]
-            )
+            ( { model | page = newPage }, Cmd.batch [ Cmd.map PageMsg newPageCmd ] )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch
-        [ Sub.map PageMsg (Page.subscriptions model.page)
-        ]
+    Sub.batch [ Sub.map PageMsg (Page.subscriptions model.page) ]
 
 
 view : Model -> Browser.Document Msg
 view model =
-    Page.view { global = model.global, router = model.router } model.page
-        |> Document.map PageMsg
-        |> Document.toBrowserDocument
-
-    """
+    let
+        bag =
+            { router = model.router }
+    in
+    Page.view bag model.page |> Html.map PageMsg
+"""
