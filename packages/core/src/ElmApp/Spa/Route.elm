@@ -13,6 +13,7 @@ module ElmApp.Spa.Route exposing
     , path
     , routeDecoder
     , stringParam
+    , withModule
     )
 
 import ElmApp.Module as Module exposing (Module)
@@ -78,6 +79,11 @@ module_ (Route info) =
 layouts : Route -> List Route
 layouts (Route info) =
     info.layouts
+
+
+withModule : Module -> Route -> Route
+withModule newModule (Route info) =
+    Route { info | module_ = newModule }
 
 
 

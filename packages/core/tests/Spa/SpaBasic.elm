@@ -1,8 +1,9 @@
 module Spa.SpaBasic exposing (..)
 
 import ElmApp.Error as Error exposing (Error)
-import ElmApp.Module exposing (DocumentInfo(..), Init(..), Model(..), Msg(..), Subscriptions(..), Update(..), View(..))
+import ElmApp.Module exposing (Init(..), Model(..), Msg(..), Subscriptions(..), Update(..), View(..))
 import ElmApp.Spa as Spa exposing (Context)
+import ElmApp.Spa.Config as Config exposing (DocumentInfo(..))
 import Expect
 import List.Extra
 import Spa.Fixtures.BasicPages as BasicPages
@@ -14,13 +15,13 @@ import Test exposing (..)
 context : Result Error Context
 context =
     Spa.init
-        { documentInfo = DocumentModule [ "Html" ]
+        { config = Config.default
         }
-        |> Ok
         |> Spa.addPage BasicPages.index
         |> Spa.addPage BasicPages.about
         |> Spa.addPage BasicPages.counter
         |> Spa.addPage BasicPages.counterAsync
+        |> Spa.build
 
 
 result : Result Error (List ( String, String ))

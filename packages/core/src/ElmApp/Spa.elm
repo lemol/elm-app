@@ -1,6 +1,7 @@
 module ElmApp.Spa exposing
     ( Context
     , addPage
+    , build
     , init
     , withGlobalModule
     , withLoadingModule
@@ -13,16 +14,17 @@ import Dict exposing (Dict)
 import Elm.CodeGen exposing (..)
 import Elm.Pretty
 import ElmApp.Error exposing (Error)
-import ElmApp.Module exposing (DocumentInfo, Module)
+import ElmApp.Module exposing (Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
 import ElmApp.Parser as Parser
+import ElmApp.Spa.Config as Config exposing (Config)
 import ElmApp.Spa.MainModule as MainModule
 import ElmApp.Spa.PagesModule as PagesModule
 import Result.Extra
 
 
 type alias Context =
-    { documentInfo : DocumentInfo
+    { config : Config
     , pages : Dict String Module
     , globalModule : Maybe Module
     , loadingModule : Maybe Module
@@ -31,26 +33,35 @@ type alias Context =
     }
 
 
-init : { documentInfo : DocumentInfo } -> Context
-init { documentInfo } =
-    { documentInfo = documentInfo
+type ContextBuilder
+    = ContextBuilder (Result Error Context)
+
+
+init : { config : Config } -> ContextBuilder
+init { config } =
+    { config = config
     , pages = Dict.empty
     , globalModule = Nothing
     , loadingModule = Nothing
     , notFoundModule = Nothing
     , unauthorizedModule = Nothing
     }
+        |> Ok
+        |> ContextBuilder
 
 
-withModule : (Context -> Module -> Context) -> String -> Result Error Context -> Result Error Context
-withModule setModule source context =
-    Result.map2
-        setModule
-        context
-        (Parser.parseModule source)
+withModule : (Context -> Module -> Context) -> String -> ContextBuilder -> ContextBuilder
+withModule setModule source (ContextBuilder builder) =
+    Parser.parseModule source
+        |> Result.map2
+            (\context module_ ->
+                setModule context module_
+            )
+            builder
+        |> ContextBuilder
 
 
-withGlobalModule : String -> Result Error Context -> Result Error Context
+withGlobalModule : String -> ContextBuilder -> ContextBuilder
 withGlobalModule =
     withModule
         (\context module_ ->
@@ -58,7 +69,7 @@ withGlobalModule =
         )
 
 
-withLoadingModule : String -> Result Error Context -> Result Error Context
+withLoadingModule : String -> ContextBuilder -> ContextBuilder
 withLoadingModule =
     withModule
         (\context module_ ->
@@ -66,7 +77,7 @@ withLoadingModule =
         )
 
 
-withNotFoundModule : String -> Result Error Context -> Result Error Context
+withNotFoundModule : String -> ContextBuilder -> ContextBuilder
 withNotFoundModule =
     withModule
         (\context module_ ->
@@ -74,7 +85,7 @@ withNotFoundModule =
         )
 
 
-withUnauthorizedModule : String -> Result Error Context -> Result Error Context
+withUnauthorizedModule : String -> ContextBuilder -> ContextBuilder
 withUnauthorizedModule =
     withModule
         (\context module_ ->
@@ -82,7 +93,7 @@ withUnauthorizedModule =
         )
 
 
-addPage : String -> Result Error Context -> Result Error Context
+addPage : String -> ContextBuilder -> ContextBuilder
 addPage =
     withModule
         (\context module_ ->
@@ -92,8 +103,27 @@ addPage =
                         (String.join "." module_.name)
                         module_
                         context.pages
+                , config =
+                    context.config
+                        |> Config.updateRouteModule module_.name module_
             }
         )
+
+
+build : ContextBuilder -> Result Error Context
+build (ContextBuilder builder) =
+    builder
+        |> Result.andThen
+            (\builderContext ->
+                { config = builderContext.config
+                , pages = builderContext.pages
+                , globalModule = builderContext.globalModule
+                , loadingModule = builderContext.loadingModule
+                , notFoundModule = builderContext.notFoundModule
+                , unauthorizedModule = builderContext.unauthorizedModule
+                }
+                    |> Ok
+            )
 
 
 write : Context -> Result Error (List ( String, String ))
@@ -105,7 +135,7 @@ write context =
                 |> PagesModule.write
 
         mainModule =
-            MainModule.write { documentInfo = context.documentInfo }
+            MainModule.write { config = context.config }
     in
     [ ( "App/Pages.elm", pagesModule )
     , ( "App/Main.elm", mainModule )

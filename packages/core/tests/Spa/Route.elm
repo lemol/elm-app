@@ -1,6 +1,6 @@
 module Spa.Route exposing (..)
 
-import ElmApp.Module exposing (DocumentInfo(..), Init(..), Model(..), Msg(..), Subscriptions(..), Update(..), View(..))
+import ElmApp.Module exposing (Init(..), Model(..), Msg(..), Subscriptions(..), Update(..), View(..))
 import ElmApp.Spa.Route as Route exposing (ParamType(..), Part(..), Path(..), Route, layouts, part, stringParam)
 import Expect
 import Json.Decode as Decode

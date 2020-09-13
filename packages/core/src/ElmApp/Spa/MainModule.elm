@@ -3,14 +3,12 @@ module ElmApp.Spa.MainModule exposing (..)
 import Elm.CodeGen exposing (..)
 import Elm.Syntax.Expression exposing (Expression)
 import ElmApp.Error exposing (Error)
-import ElmApp.Module exposing (DocumentInfo(..), Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
-import ElmApp.Spa.PagesModule exposing (pushUrlDecl)
+import ElmApp.Spa.Config exposing (Config, DocumentInfo(..))
 import ElmApp.Spa.Utils as Utils exposing (..)
-import Html.Attributes exposing (name)
 
 
-write : { documentInfo : DocumentInfo } -> Result Error File
+write : { config : Config } -> Result Error File
 write opts =
     let
         moduleName =
@@ -40,7 +38,7 @@ write opts =
                     Nothing
                     Nothing
                  ]
-                    ++ documentImports opts.documentInfo
+                    ++ documentImports opts.config.document
                  -- ++ globalImport
                 )
                 declarations
@@ -54,7 +52,7 @@ write opts =
             , initDecl
             , updateDecl
             , subscriptionsDecl
-            , viewDecl opts.documentInfo
+            , viewDecl opts.config.document
             ]
     in
     Ok file_
@@ -331,7 +329,7 @@ documentImports info =
         DocumentModule name ->
             [ importStmt name Nothing Nothing ]
 
-        DocumentModuleCustom name _ _ ->
+        DocumentModuleCustom name _ _ _ ->
             [ importStmt name Nothing Nothing ]
 
 
@@ -341,7 +339,7 @@ documentMap info =
         DocumentModule name ->
             fqFun name "map"
 
-        DocumentModuleCustom name map _ ->
+        DocumentModuleCustom name _ map _ ->
             fqFun name map
 
 
@@ -354,5 +352,5 @@ documentToBrowser info =
         DocumentModule name ->
             [ fqFun name "toBrowserDocument" ]
 
-        DocumentModuleCustom name _ toBrowser ->
+        DocumentModuleCustom name _ _ toBrowser ->
             [ fqFun name toBrowser ]

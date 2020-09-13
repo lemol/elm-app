@@ -1,6 +1,5 @@
 module ElmApp.Module exposing
-    ( DocumentInfo(..)
-    , Init(..)
+    ( Init(..)
     , Model(..)
     , Module
     , Msg(..)
@@ -34,11 +33,6 @@ type alias Module =
     , subscriptions : Subscriptions
     , view : View
     }
-
-
-type DocumentInfo
-    = DocumentModule (List String)
-    | DocumentModuleCustom (List String) String String
 
 
 type alias Name =
