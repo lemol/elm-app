@@ -1,11 +1,13 @@
 module ElmApp.Error exposing (Error(..), notImplemented, toString)
 
+import Json.Decode as Decode
 import Parser
 
 
 type Error
     = Error String
     | ElmParserError (List Parser.DeadEnd)
+    | DecodeError Decode.Error
 
 
 notImplemented : Error
@@ -21,3 +23,6 @@ toString err =
 
         ElmParserError x ->
             Parser.deadEndsToString x
+
+        DecodeError x ->
+            Decode.errorToString x

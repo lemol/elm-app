@@ -3,6 +3,7 @@ module ElmApp.Spa exposing
     , addPage
     , build
     , init
+    , initDecodingConfig
     , withGlobalModule
     , withLoadingModule
     , withNotFoundModule
@@ -13,13 +14,16 @@ module ElmApp.Spa exposing
 import Dict exposing (Dict)
 import Elm.CodeGen exposing (..)
 import Elm.Pretty
-import ElmApp.Error exposing (Error)
+import ElmApp.Error as Error exposing (Error(..))
 import ElmApp.Module exposing (Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
 import ElmApp.Parser as Parser
 import ElmApp.Spa.Config as Config exposing (Config)
 import ElmApp.Spa.MainModule as MainModule
 import ElmApp.Spa.PagesModule as PagesModule
+import ElmApp.Spa.Route as Route exposing (module_)
+import Json.Decode as Decode
+import List.Extra
 import Result.Extra
 
 
@@ -37,8 +41,8 @@ type ContextBuilder
     = ContextBuilder (Result Error Context)
 
 
-init : { config : Config } -> ContextBuilder
-init { config } =
+internalInit : Config -> Context
+internalInit config =
     { config = config
     , pages = Dict.empty
     , globalModule = Nothing
@@ -46,8 +50,19 @@ init { config } =
     , notFoundModule = Nothing
     , unauthorizedModule = Nothing
     }
-        |> Ok
-        |> ContextBuilder
+
+
+init : Config -> ContextBuilder
+init =
+    internalInit >> Ok >> ContextBuilder
+
+
+initDecodingConfig : Decode.Value -> ContextBuilder
+initDecodingConfig =
+    Decode.decodeValue Config.configDecoder
+        >> Result.mapError Error.DecodeError
+        >> Result.map internalInit
+        >> ContextBuilder
 
 
 withModule : (Context -> Module -> Context) -> String -> ContextBuilder -> ContextBuilder
@@ -114,15 +129,39 @@ build : ContextBuilder -> Result Error Context
 build (ContextBuilder builder) =
     builder
         |> Result.andThen
-            (\builderContext ->
-                { config = builderContext.config
-                , pages = builderContext.pages
-                , globalModule = builderContext.globalModule
-                , loadingModule = builderContext.loadingModule
-                , notFoundModule = builderContext.notFoundModule
-                , unauthorizedModule = builderContext.unauthorizedModule
-                }
-                    |> Ok
+            (\context ->
+                case contextErrors context of
+                    Just xs ->
+                        Err (Error xs)
+
+                    Nothing ->
+                        { config = context.config
+                        , pages = context.pages
+                        , globalModule = context.globalModule
+                        , loadingModule = context.loadingModule
+                        , notFoundModule = context.notFoundModule
+                        , unauthorizedModule = context.unauthorizedModule
+                        }
+                            |> Ok
+            )
+
+
+contextErrors : Context -> Maybe String
+contextErrors context =
+    context.config.routes
+        |> List.Extra.find
+            (\route ->
+                context.pages
+                    |> Dict.values
+                    |> List.any
+                        (\page ->
+                            page.name == (Route.module_ route |> .name)
+                        )
+                    |> not
+            )
+        |> Maybe.map
+            (\route ->
+                "'" ++ Route.name route ++ "' route has no corresponding page module"
             )
 
 
