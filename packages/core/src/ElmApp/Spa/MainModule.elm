@@ -16,7 +16,7 @@ write opts =
 
         file_ =
             file
-                (normalModule moduleName (funExpose "main"))
+                (normalModule moduleName [ funExpose "main" ])
                 ([ importStmt
                     [ "App", "Pages", "Internal", "Router" ]
                     (Just [ "Router" ])

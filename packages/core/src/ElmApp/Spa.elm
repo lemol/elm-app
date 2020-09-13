@@ -1,13 +1,24 @@
-module ElmApp.Spa exposing (..)
+module ElmApp.Spa exposing
+    ( Context
+    , addPage
+    , init
+    , withGlobalModule
+    , withLoadingModule
+    , withNotFoundModule
+    , withUnauthorizedModule
+    , write
+    )
 
 import Dict exposing (Dict)
 import Elm.CodeGen exposing (..)
+import Elm.Pretty
 import ElmApp.Error exposing (Error)
 import ElmApp.Module exposing (DocumentInfo, Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
 import ElmApp.Parser as Parser
-import ElmApp.Spa.MainModule as MainModule
+import ElmApp.Spa.MainModule as MainModule exposing (flagsDecl)
 import ElmApp.Spa.PagesModule as PagesModule
+import Result.Extra
 
 
 type alias Context =
@@ -94,9 +105,7 @@ write context =
                 |> PagesModule.write
 
         mainModule =
-            context.pages
-                |> Dict.values
-                |> MainModule.write
+            MainModule.write { documentInfo = context.documentInfo }
     in
     [ ( "App/Pages.elm", pagesModule )
     , ( "App/Main.elm", mainModule )
@@ -105,5 +114,9 @@ write context =
 
 
 writeAll : List ( String, Result Error File ) -> Result Error (List ( String, String ))
-writeAll =
-    Debug.todo "IMPL"
+writeAll fs =
+    fs
+        |> List.map (\( fn, ff ) -> ff |> Result.map (Tuple.pair fn))
+        -- List (Result Error (String, File))
+        |> Result.Extra.combine
+        |> Result.map (List.map <| Tuple.mapSecond (Elm.Pretty.pretty 50))

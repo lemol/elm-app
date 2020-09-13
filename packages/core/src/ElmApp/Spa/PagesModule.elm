@@ -45,7 +45,12 @@ write pages =
         declarations =
             [ asyncDecl
             , pushUrlDecl
-            , pageTypeDecls pages
+            , pageTypeDecl pages
+            , fromRouteDecl pages
+            , appUrlDecl
+            , appUrlsDecl
+            , urlPageDecl
+            , urlStringDecl
             ]
     in
     Ok file_
@@ -82,7 +87,7 @@ pushUrlDecl =
             )
         )
         "pushUrl"
-        []
+        [ varPattern "url" ]
         (apply
             [ fqFun [ "Navigation" ] "pushUrl"
             , apply
@@ -103,24 +108,102 @@ pushUrlDecl =
         )
 
 
-pageTypeDecls : List Module -> Declaration
-pageTypeDecls pages =
+pageTypeDecl : List Module -> Declaration
+pageTypeDecl pages =
     let
         pageConstructor module_ =
-            ( pageName module_.name, [] )
+            ( pageName module_, [] )
     in
     pages
         |> List.map pageConstructor
         |> customTypeDecl Nothing "Page" []
 
 
+fromRouteDecl : List Module -> Declaration
+fromRouteDecl pages =
+    let
+        caseBranch page =
+            ( namedPattern (routeName page) [], construct (pageName page) [] )
+    in
+    funDecl Nothing
+        (Just
+            (funAnn
+                (fqTyped [ "Router" ] "Route" [])
+                (typed "Page" [])
+            )
+        )
+        "fromRoute"
+        [ varPattern "route" ]
+        (pages
+            |> List.map caseBranch
+            |> caseExpr (val "route")
+        )
+
+
+appUrlDecl : Declaration
+appUrlDecl =
+    aliasDecl Nothing
+        "AppUrl"
+        []
+        (fqTyped [ "Router" ] "AppUrl" [])
+
+
+appUrlsDecl : Declaration
+appUrlsDecl =
+    aliasDecl Nothing
+        "AppUrls"
+        []
+        (fqTyped [ "Router" ] "AppUrls" [])
+
+
+urlPageDecl : Declaration
+urlPageDecl =
+    funDecl Nothing
+        (Just
+            (funAnn
+                (typed "AppUrl" [])
+                (typed "Page" [])
+            )
+        )
+        "urlPage"
+        []
+        (chain
+            (fqFun [ "Router" ] "urlRoute")
+            [ fun "fromRoute"
+            ]
+        )
+
+
+urlStringDecl : Declaration
+urlStringDecl =
+    funDecl Nothing
+        (Just
+            (funAnn
+                (typed "AppUrl" [])
+                (typed "String" [])
+            )
+        )
+        "urlString"
+        []
+        (chain
+            (fqFun [ "Router" ] "urlRoute")
+            [ fqFun [ "Router" ] "toPath"
+            ]
+        )
+
+
 
 -- UTILS
 
 
-pageName : List String -> String
-pageName moduleName =
-    case moduleName of
+routeName : Module -> String
+routeName module_ =
+    "Router." ++ pageName module_
+
+
+pageName : Module -> String
+pageName module_ =
+    case module_.name of
         "Pages" :: xs ->
             String.join "" xs
 
