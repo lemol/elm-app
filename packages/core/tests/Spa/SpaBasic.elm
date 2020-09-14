@@ -10,6 +10,7 @@ import List.Extra
 import Spa.Fixtures.BasicPages as BasicPages
 import Spa.Fixtures.MainModule as MainModule
 import Spa.Fixtures.PagesModule as PagesModule
+import Spa.Fixtures.RouterModule as RouterModule
 import Test exposing (..)
 
 
@@ -18,7 +19,7 @@ config =
     Json.object
         [ ( "routes"
           , Json.list Json.object
-                [ [ ( "path", Json.string "/index" )
+                [ [ ( "path", Json.string "/" )
                   , ( "module", Json.string "Pages.Index" )
                   ]
                 , [ ( "path", Json.string "/about" )
@@ -71,12 +72,16 @@ suite =
                     |> Spa.addPage BasicPages.counter
                     |> Spa.build
                     |> Expect.err
-        , test "PagesModule" <|
+        , test "should generate de App/Pages.elm file" <|
             \_ ->
                 getFile "App/Pages.elm"
                     |> Expect.equal (Ok PagesModule.content)
-        , test "MainModule" <|
+        , test "should generate de App/Main.elm file" <|
             \_ ->
                 getFile "App/Main.elm"
                     |> Expect.equal (Ok MainModule.content)
+        , test "should generate de App/Pages/Internal/Router.elm file" <|
+            \_ ->
+                getFile "App/Pages/Internal/Router.elm"
+                    |> Expect.equal (Ok RouterModule.content)
         ]

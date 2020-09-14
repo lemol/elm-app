@@ -21,7 +21,8 @@ import ElmApp.Parser as Parser
 import ElmApp.Spa.Config as Config exposing (Config)
 import ElmApp.Spa.MainModule as MainModule
 import ElmApp.Spa.PagesModule as PagesModule
-import ElmApp.Spa.Route as Route exposing (module_)
+import ElmApp.Spa.Route as Route
+import ElmApp.Spa.RouterModule as RouterModule
 import Json.Decode as Decode
 import List.Extra
 import Result.Extra
@@ -175,9 +176,16 @@ write context =
 
         mainModule =
             MainModule.write { config = context.config }
+
+        routerModule =
+            RouterModule.write
+                { config = context.config
+                , pages = context.pages |> Dict.values
+                }
     in
     [ ( "App/Pages.elm", pagesModule )
     , ( "App/Main.elm", mainModule )
+    , ( "App/Pages/Internal/Router.elm", routerModule )
     ]
         |> writeAll
 

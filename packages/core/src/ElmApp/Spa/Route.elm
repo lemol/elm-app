@@ -8,17 +8,20 @@ module ElmApp.Spa.Route exposing
     , layouts
     , module_
     , name
+    , params
     , parsePath
     , part
     , path
     , routeDecoder
     , stringParam
+    , valueName
     , withModule
     )
 
 import ElmApp.Module as Module exposing (Module)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (optional, required)
+import String.Extra
 
 
 
@@ -71,6 +74,11 @@ name (Route info) =
     info.name
 
 
+valueName : Route -> String
+valueName (Route info) =
+    String.Extra.decapitalize info.name
+
+
 module_ : Route -> Module
 module_ (Route info) =
     info.module_
@@ -84,6 +92,28 @@ layouts (Route info) =
 withModule : Module -> Route -> Route
 withModule newModule (Route info) =
     Route { info | module_ = newModule }
+
+
+params : Route -> List ( ParamType, String )
+params (Route info) =
+    case info.path of
+        Root ->
+            []
+
+        Parts parts ->
+            parts
+                |> List.filterMap
+                    (\x ->
+                        case x of
+                            Param StringParam paramName ->
+                                Just ( StringParam, paramName )
+
+                            Param IntParam paramName ->
+                                Just ( IntParam, paramName )
+
+                            _ ->
+                                Nothing
+                    )
 
 
 

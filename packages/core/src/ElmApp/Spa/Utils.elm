@@ -1,6 +1,10 @@
 module ElmApp.Spa.Utils exposing (..)
 
 import Elm.CodeGen exposing (..)
+import Elm.Syntax.Expression as Expression
+import Elm.Syntax.Infix as Infix
+import Elm.Syntax.Node as Node exposing (Node(..))
+import Elm.Syntax.Range as Range
 
 
 
@@ -137,3 +141,15 @@ updateDecl =
         [ varPattern "msg"
         , varPattern "model"
         ]
+
+
+
+-- ELM.SYNTAX HELPERS
+
+
+applySlash : Expression -> Expression -> Expression
+applySlash exprl exprr =
+    Expression.OperatorApplication "</>"
+        Infix.Left
+        (Node Range.emptyRange exprl)
+        (Node Range.emptyRange exprr)
