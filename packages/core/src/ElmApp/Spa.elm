@@ -170,9 +170,10 @@ write : Context -> Result Error (List ( String, String ))
 write context =
     let
         pagesModule =
-            context.pages
-                |> Dict.values
-                |> PagesModule.write
+            PagesModule.write
+                { config = context.config
+                , pages = context.pages |> Dict.values
+                }
 
         mainModule =
             MainModule.write { config = context.config }

@@ -1,7 +1,7 @@
 module Spa.Route exposing (..)
 
 import ElmApp.Module exposing (Init(..), Model(..), Msg(..), Subscriptions(..), Update(..), View(..))
-import ElmApp.Spa.Route as Route exposing (ParamType(..), Part(..), Path(..), Route, layouts, part, stringParam)
+import ElmApp.Spa.Route as Route exposing (ParamType(..), Part(..), Path(..), Route, intParam, layouts, part, stringParam)
 import Expect
 import Json.Decode as Decode
 import Test exposing (..)
@@ -76,32 +76,6 @@ suite =
                 in
                 json
                     |> expectDecodeRouteTo expected
-        , test "Route: decode with params" <|
-            \_ ->
-                let
-                    json =
-                        """
-                        {
-                            "path": "/users/:userId/relations/:friendId",
-                            "module": "Pages.User.RelationDetails"
-                        }
-                        """
-
-                    expected =
-                        { path =
-                            Parts
-                                [ part "users"
-                                , stringParam "userId"
-                                , part "relations"
-                                , stringParam "friendId"
-                                ]
-                        , name = "User_RelationDetails"
-                        , module_ = [ "Pages", "User", "RelationDetails" ]
-                        , layouts = []
-                        }
-                in
-                json
-                    |> expectDecodeRouteTo expected
         , test "Route: with custom name" <|
             \_ ->
                 let
@@ -138,6 +112,84 @@ suite =
                         { path = Parts [ part "about" ]
                         , name = "CustomDir_About"
                         , module_ = [ "CustomDir", "About" ]
+                        , layouts = []
+                        }
+                in
+                json
+                    |> expectDecodeRouteTo expected
+        , test "by default params are of type String" <|
+            \_ ->
+                let
+                    json =
+                        """
+                        {
+                            "path": "/users/:userId/relations/:friendId",
+                            "module": "Pages.User.RelationDetails"
+                        }
+                        """
+
+                    expected =
+                        { path =
+                            Parts
+                                [ part "users"
+                                , stringParam "userId"
+                                , part "relations"
+                                , stringParam "friendId"
+                                ]
+                        , name = "User_RelationDetails"
+                        , module_ = [ "Pages", "User", "RelationDetails" ]
+                        , layouts = []
+                        }
+                in
+                json
+                    |> expectDecodeRouteTo expected
+        , test "can read explicit String param" <|
+            \_ ->
+                let
+                    json =
+                        """
+                        {
+                            "path": "/users/:userId:String/relations/:friendId",
+                            "module": "Pages.User.RelationDetails"
+                        }
+                        """
+
+                    expected =
+                        { path =
+                            Parts
+                                [ part "users"
+                                , stringParam "userId"
+                                , part "relations"
+                                , stringParam "friendId"
+                                ]
+                        , name = "User_RelationDetails"
+                        , module_ = [ "Pages", "User", "RelationDetails" ]
+                        , layouts = []
+                        }
+                in
+                json
+                    |> expectDecodeRouteTo expected
+        , test "can read explicit Int param" <|
+            \_ ->
+                let
+                    json =
+                        """
+                        {
+                            "path": "/users/:userId:Int/relations/:friendId",
+                            "module": "Pages.User.RelationDetails"
+                        }
+                        """
+
+                    expected =
+                        { path =
+                            Parts
+                                [ part "users"
+                                , intParam "userId"
+                                , part "relations"
+                                , stringParam "friendId"
+                                ]
+                        , name = "User_RelationDetails"
+                        , module_ = [ "Pages", "User", "RelationDetails" ]
                         , layouts = []
                         }
                 in

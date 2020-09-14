@@ -201,9 +201,23 @@ strToPart : String -> Part
 strToPart str =
     case String.toList str of
         ':' :: xs ->
-            xs
-                |> String.fromList
-                |> Param StringParam
+            case xs |> String.fromList |> String.split ":" of
+                [ paramName ] ->
+                    Param StringParam paramName
+
+                [ paramName, typeName ] ->
+                    case String.toLower typeName of
+                        "string" ->
+                            Param StringParam paramName
+
+                        "int" ->
+                            Param IntParam paramName
+
+                        imposibleShouldReturnError ->
+                            Part ""
+
+                imposibleForNow ->
+                    Part ""
 
         xs ->
             xs

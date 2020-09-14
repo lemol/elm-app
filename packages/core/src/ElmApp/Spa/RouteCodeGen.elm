@@ -24,6 +24,11 @@ routeContructTA route =
     ( Route.name route, paramsTA route )
 
 
+pageContructTA : Route -> ( String, List TypeAnnotation )
+pageContructTA route =
+    ( Route.name route, [] )
+
+
 routeUnconstructPattern : Route -> Pattern
 routeUnconstructPattern route =
     let
@@ -97,6 +102,12 @@ routeUrlRecord route =
                     |> List.map Tuple.second
                     |> List.map val
                     |> construct (Route.name route)
+                    |> (if 0 == List.length (Route.params route) then
+                            identity
+
+                        else
+                            parens
+                       )
                 ]
 
         urlDef params =

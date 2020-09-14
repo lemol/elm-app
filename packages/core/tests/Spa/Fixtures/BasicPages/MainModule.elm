@@ -1,4 +1,4 @@
-module Spa.Fixtures.MainModule exposing (..)
+module Spa.Fixtures.BasicPages.MainModule exposing (..)
 
 
 content : String

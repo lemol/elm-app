@@ -4,10 +4,19 @@ import Elm.CodeGen exposing (..)
 import ElmApp.Error exposing (Error)
 import ElmApp.Module exposing (Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
+import ElmApp.Spa.Config exposing (Config)
+import ElmApp.Spa.Route as Route
+import ElmApp.Spa.RouteCodeGen exposing (pageContructTA)
 
 
-write : List Module -> Result Error File
-write pages =
+type alias Options =
+    { config : Config
+    , pages : List Module
+    }
+
+
+write : Options -> Result Error File
+write opts =
     let
         moduleName =
             [ "App", "Pages" ]
@@ -45,8 +54,8 @@ write pages =
         declarations =
             [ asyncDecl
             , pushUrlDecl
-            , pageTypeDecl pages
-            , fromRouteDecl pages
+            , pageTypeDecl opts
+            , fromRouteDecl opts
             , appUrlDecl
             , appUrlsDecl
             , urlPageDecl
@@ -108,22 +117,22 @@ pushUrlDecl =
         )
 
 
-pageTypeDecl : List Module -> Declaration
-pageTypeDecl pages =
-    let
-        pageConstructor module_ =
-            ( pageName module_, [] )
-    in
-    pages
-        |> List.map pageConstructor
+pageTypeDecl : Options -> Declaration
+pageTypeDecl opts =
+    opts.config.routes
+        |> List.map pageContructTA
         |> customTypeDecl Nothing "Page" []
 
 
-fromRouteDecl : List Module -> Declaration
-fromRouteDecl pages =
+fromRouteDecl : Options -> Declaration
+fromRouteDecl opts =
     let
-        caseBranch page =
-            ( namedPattern (routeName page) [], construct (pageName page) [] )
+        caseBranch route =
+            ( Route.params route
+                |> List.map (always allPattern)
+                |> fqNamedPattern [ "Router" ] (Route.name route)
+            , construct (Route.name route) []
+            )
     in
     funDecl Nothing
         (Just
@@ -134,7 +143,7 @@ fromRouteDecl pages =
         )
         "fromRoute"
         [ varPattern "route" ]
-        (pages
+        (opts.config.routes
             |> List.map caseBranch
             |> caseExpr (val "route")
         )
