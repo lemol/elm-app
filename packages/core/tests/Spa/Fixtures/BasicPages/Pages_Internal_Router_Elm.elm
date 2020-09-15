@@ -1,4 +1,4 @@
-module Spa.Fixtures.BasicPages.RouterModule exposing (..)
+module Spa.Fixtures.BasicPages.Pages_Internal_Router_Elm exposing (..)
 
 
 contentSimple : String

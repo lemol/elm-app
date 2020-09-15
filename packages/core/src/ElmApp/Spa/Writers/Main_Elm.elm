@@ -1,4 +1,4 @@
-module ElmApp.Spa.MainModule exposing (..)
+module ElmApp.Spa.Writers.Main_Elm exposing (..)
 
 import Elm.CodeGen exposing (..)
 import Elm.Syntax.Expression exposing (Expression)

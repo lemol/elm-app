@@ -1,4 +1,4 @@
-module Spa.Fixtures.BasicPages.Pages_Internal_Page exposing (..)
+module Spa.Fixtures.BasicPages.Pages_Internal_Page_Elm exposing (..)
 
 
 contentSimple : String

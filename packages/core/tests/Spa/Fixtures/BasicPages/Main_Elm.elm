@@ -1,4 +1,4 @@
-module Spa.Fixtures.BasicPages.MainModule exposing (..)
+module Spa.Fixtures.BasicPages.Main_Elm exposing (..)
 
 
 content : String

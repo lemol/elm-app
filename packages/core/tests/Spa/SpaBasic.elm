@@ -8,10 +8,10 @@ import Expect
 import Json.Encode as Json
 import List.Extra
 import Spa.Fixtures.BasicPages as BasicPages
-import Spa.Fixtures.BasicPages.MainModule as MainModule
-import Spa.Fixtures.BasicPages.PagesModule as PagesModule
-import Spa.Fixtures.BasicPages.Pages_Internal_Page as Pages_Internal_Page
-import Spa.Fixtures.BasicPages.RouterModule as RouterModule
+import Spa.Fixtures.BasicPages.Main_Elm as Main_Elm
+import Spa.Fixtures.BasicPages.Pages_Elm as Pages_Elm
+import Spa.Fixtures.BasicPages.Pages_Internal_Page_Elm as Pages_Internal_Page_Elm
+import Spa.Fixtures.BasicPages.Pages_Internal_Router_Elm as Pages_Internal_Router_Elm
 import Spa.Fixtures.BasicPagesWithParams as BasicPagesWithParams
 import Test exposing (..)
 
@@ -73,18 +73,18 @@ suite =
         , basicSuite "simple pages"
             configSimple
             BasicPages.pages
-            { main_elm = MainModule.content
-            , pages_elm = PagesModule.contentSimple
-            , pages_internal_router_elm = RouterModule.contentSimple
-            , pages_internal_page_elm = Pages_Internal_Page.contentSimple
+            { main_elm = Main_Elm.content
+            , pages_elm = Pages_Elm.contentSimple
+            , pages_internal_router_elm = Pages_Internal_Router_Elm.contentSimple
+            , pages_internal_page_elm = Pages_Internal_Page_Elm.contentSimple
             }
         , basicSuite "with route params"
             configWithRouteParams
             BasicPagesWithParams.pages
-            { main_elm = MainModule.content
-            , pages_elm = PagesModule.contentWithRouteParams
-            , pages_internal_router_elm = RouterModule.contentWithRouteParams
-            , pages_internal_page_elm = Pages_Internal_Page.contentWithRouteParams
+            { main_elm = Main_Elm.content
+            , pages_elm = Pages_Elm.contentWithRouteParams
+            , pages_internal_router_elm = Pages_Internal_Router_Elm.contentWithRouteParams
+            , pages_internal_page_elm = Pages_Internal_Page_Elm.contentWithRouteParams
             }
         ]
 
@@ -170,6 +170,6 @@ justGetFile :
     -> String
     -> Result Error String
 justGetFile config pages name =
-    context  config pages
+    context config pages
         |> result
         |> getFile name

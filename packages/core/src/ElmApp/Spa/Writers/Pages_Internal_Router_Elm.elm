@@ -1,11 +1,10 @@
-module ElmApp.Spa.RouterModule exposing (..)
+module ElmApp.Spa.Writers.Pages_Internal_Router_Elm exposing (..)
 
 import Elm.CodeGen exposing (..)
 import ElmApp.Error exposing (Error)
 import ElmApp.Module exposing (Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
 import ElmApp.Spa.Config exposing (Config)
-import ElmApp.Spa.Route as Route
 import ElmApp.Spa.RouteCodeGen as RouteCodeGen
 
 

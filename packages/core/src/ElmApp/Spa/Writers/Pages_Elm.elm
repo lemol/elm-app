@@ -1,4 +1,4 @@
-module ElmApp.Spa.PagesModule exposing (..)
+module ElmApp.Spa.Writers.Pages_Elm exposing (..)
 
 import Elm.CodeGen exposing (..)
 import ElmApp.Error exposing (Error)

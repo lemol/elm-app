@@ -19,11 +19,11 @@ import ElmApp.Module exposing (Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
 import ElmApp.Parser as Parser
 import ElmApp.Spa.Config as Config exposing (Config)
-import ElmApp.Spa.MainModule as MainModule
-import ElmApp.Spa.PagesInternalPageModule as PagesInternalPageModule
-import ElmApp.Spa.PagesModule as PagesModule
 import ElmApp.Spa.Route as Route
-import ElmApp.Spa.RouterModule as RouterModule
+import ElmApp.Spa.Writers.Main_Elm as Main_Elm
+import ElmApp.Spa.Writers.Pages_Elm as Pages_Elm
+import ElmApp.Spa.Writers.Pages_Internal_Page_Elm as Pages_Internal_Page_Elm
+import ElmApp.Spa.Writers.Pages_Internal_Router_Elm as Pages_Internal_Router_Elm
 import Json.Decode as Decode
 import List.Extra
 import Result.Extra
@@ -171,22 +171,22 @@ write : Context -> Result Error (List ( String, String ))
 write context =
     let
         mainElm =
-            MainModule.write { config = context.config }
+            Main_Elm.write { config = context.config }
 
         pagesElm =
-            PagesModule.write
+            Pages_Elm.write
                 { config = context.config
                 , pages = context.pages |> Dict.values
                 }
 
         pagesInternalRouterElm =
-            RouterModule.write
+            Pages_Internal_Router_Elm.write
                 { config = context.config
                 , pages = context.pages |> Dict.values
                 }
 
         pagesInternalPageElm =
-            PagesInternalPageModule.write
+            Pages_Internal_Page_Elm.write
                 { config = context.config
                 , pages = context.pages |> Dict.values
                 }
