@@ -20,6 +20,7 @@ import ElmApp.ModuleType exposing (ModuleType(..))
 import ElmApp.Parser as Parser
 import ElmApp.Spa.Config as Config exposing (Config)
 import ElmApp.Spa.MainModule as MainModule
+import ElmApp.Spa.PagesInternalPageModule as PagesInternalPageModule
 import ElmApp.Spa.PagesModule as PagesModule
 import ElmApp.Spa.Route as Route
 import ElmApp.Spa.RouterModule as RouterModule
@@ -169,24 +170,31 @@ contextErrors context =
 write : Context -> Result Error (List ( String, String ))
 write context =
     let
-        pagesModule =
+        mainElm =
+            MainModule.write { config = context.config }
+
+        pagesElm =
             PagesModule.write
                 { config = context.config
                 , pages = context.pages |> Dict.values
                 }
 
-        mainModule =
-            MainModule.write { config = context.config }
-
-        routerModule =
+        pagesInternalRouterElm =
             RouterModule.write
                 { config = context.config
                 , pages = context.pages |> Dict.values
                 }
+
+        pagesInternalPageElm =
+            PagesInternalPageModule.write
+                { config = context.config
+                , pages = context.pages |> Dict.values
+                }
     in
-    [ ( "App/Pages.elm", pagesModule )
-    , ( "App/Main.elm", mainModule )
-    , ( "App/Pages/Internal/Router.elm", routerModule )
+    [ ( "App/Main.elm", mainElm )
+    , ( "App/Pages.elm", pagesElm )
+    , ( "App/Pages/Internal/Router.elm", pagesInternalRouterElm )
+    , ( "App/Pages/Internal/Page.elm", pagesInternalPageElm )
     ]
         |> writeAll
 

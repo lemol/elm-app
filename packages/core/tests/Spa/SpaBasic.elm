@@ -10,6 +10,7 @@ import List.Extra
 import Spa.Fixtures.BasicPages as BasicPages
 import Spa.Fixtures.BasicPages.MainModule as MainModule
 import Spa.Fixtures.BasicPages.PagesModule as PagesModule
+import Spa.Fixtures.BasicPages.Pages_Internal_Page as Pages_Internal_Page
 import Spa.Fixtures.BasicPages.RouterModule as RouterModule
 import Test exposing (..)
 
@@ -61,17 +62,26 @@ configWithRouteParams =
 suite : Test
 suite =
     describe "basic spa"
-        [ basicSuite "simple pages"
+        [ test "fail if routes are not satisfied" <|
+            \_ ->
+                Spa.initDecodingConfig configSimple
+                    |> Spa.addPage BasicPages.about
+                    |> Spa.addPage BasicPages.counter
+                    |> Spa.build
+                    |> Expect.err
+        , basicSuite "simple pages"
             configSimple
-            { mainModule = MainModule.content
-            , pagesModule = PagesModule.contentSimple
-            , routerModule = RouterModule.contentSimple
+            { main_elm = MainModule.content
+            , pages_elm = PagesModule.contentSimple
+            , pages_internal_router_elm = RouterModule.contentSimple
+            , pages_internal_page_elm = Pages_Internal_Page.contentSimple
             }
         , basicSuite "with route params"
             configWithRouteParams
-            { mainModule = MainModule.content
-            , pagesModule = PagesModule.contentWithRouteParams
-            , routerModule = RouterModule.contentWithRouteParams
+            { main_elm = MainModule.content
+            , pages_elm = PagesModule.contentWithRouteParams
+            , pages_internal_router_elm = RouterModule.contentWithRouteParams
+            , pages_internal_page_elm = Pages_Internal_Page.contentSimple
             }
         ]
 
@@ -80,32 +90,30 @@ basicSuite :
     String
     -> Json.Value
     ->
-        { pagesModule : String
-        , mainModule : String
-        , routerModule : String
+        { main_elm : String
+        , pages_elm : String
+        , pages_internal_router_elm : String
+        , pages_internal_page_elm : String
         }
     -> Test
 basicSuite name config content =
     describe name
-        [ test "fail if routes are not satisfied" <|
+        [ test "should generate the App/Main.elm file" <|
             \_ ->
-                Spa.initDecodingConfig config
-                    |> Spa.addPage BasicPages.about
-                    |> Spa.addPage BasicPages.counter
-                    |> Spa.build
-                    |> Expect.err
+                justGetFile config "App/Main.elm"
+                    |> Expect.equal (Ok content.main_elm)
         , test "should generate the App/Pages.elm file" <|
             \_ ->
                 justGetFile config "App/Pages.elm"
-                    |> Expect.equal (Ok content.pagesModule)
-        , test "should generate the App/Main.elm file" <|
-            \_ ->
-                justGetFile config "App/Main.elm"
-                    |> Expect.equal (Ok content.mainModule)
+                    |> Expect.equal (Ok content.pages_elm)
         , test "should generate the App/Pages/Internal/Router.elm file" <|
             \_ ->
                 justGetFile config "App/Pages/Internal/Router.elm"
-                    |> Expect.equal (Ok content.routerModule)
+                    |> Expect.equal (Ok content.pages_internal_router_elm)
+        , test "should generate the App/Pages/Internal/Page.elm file" <|
+            \_ ->
+                justGetFile config "App/Pages/Internal/Page.elm"
+                    |> Expect.equal (Ok content.pages_internal_page_elm)
         ]
 
 

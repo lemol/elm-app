@@ -9,6 +9,7 @@ module ElmApp.Module exposing
     , View(..)
     , build
     , encodeView
+    , modelAnn
     , withImports
     , withInit
     , withModel
@@ -18,7 +19,7 @@ module ElmApp.Module exposing
     , withView
     )
 
-import Elm.CodeGen exposing (Import, ModuleName, TypeAnnotation)
+import Elm.CodeGen exposing (Import, ModuleName, TypeAnnotation, fqTyped)
 import Elm.Syntax.TypeAnnotation as TypeAnnotation
 import Json.Encode exposing (Value)
 
@@ -141,3 +142,14 @@ withSubscriptions subscriptions mod =
 withView : View -> Module -> Module
 withView view mod =
     { mod | view = view }
+
+
+modelAnn : Module -> Maybe TypeAnnotation
+modelAnn module_ =
+    case module_.model of
+        Model1 modelName ->
+            fqTyped module_.name modelName []
+                |> Just
+
+        Model0 ->
+            Nothing
