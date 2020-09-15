@@ -37,6 +37,7 @@ type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | PageMsg Page.Msg
+    | PageExternalMsg Page.ExternalMsg
 
 
 init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
@@ -85,20 +86,27 @@ update msg model =
                 bag =
                     { router = newRouter }
 
-                ( newPage, newPageCmd ) =
+                ( newPage, newPageCmd, newPageExternalCmd ) =
                     Page.enterRoute bag model.page route
             in
-            ( { model | page = newPage, router = newRouter }, Cmd.batch [ Cmd.map PageMsg newPageCmd ] )
+            ( { model | page = newPage, router = newRouter }
+            , Cmd.batch [ Cmd.map PageMsg newPageCmd, Cmd.map PageExternalMsg newPageExternalCmd ]
+            )
 
         PageMsg subMsg ->
             let
                 bag =
                     { router = model.router }
 
-                ( newPage, newPageCmd ) =
+                ( newPage, newPageCmd, newPageExternalCmd ) =
                     Page.update bag subMsg model.page
             in
-            ( { model | page = newPage }, Cmd.batch [ Cmd.map PageMsg newPageCmd ] )
+            ( { model | page = newPage }
+            , Cmd.batch [ Cmd.map PageMsg newPageCmd, Cmd.map PageExternalMsg newPageExternalCmd ]
+            )
+
+        PageExternalMsg subMsg ->
+            ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg

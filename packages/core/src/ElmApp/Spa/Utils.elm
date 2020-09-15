@@ -62,6 +62,11 @@ cmdBatch items =
         ]
 
 
+cmdNone : Expression
+cmdNone =
+    fqVal [ "Cmd" ] "none"
+
+
 
 -- SUBSCRIPRIONS
 

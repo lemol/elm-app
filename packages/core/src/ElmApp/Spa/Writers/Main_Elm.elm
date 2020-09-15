@@ -114,6 +114,7 @@ msgDecl =
 
         --, ( "GlobalMsg", [ fqTyped [ "Page" ] "Msg" [] ] )
         , ( "PageMsg", [ fqTyped [ "Page" ] "Msg" [] ] )
+        , ( "PageExternalMsg", [ fqTyped [ "Page" ] "ExternalMsg" [] ] )
         ]
 
 
@@ -222,7 +223,12 @@ updateDecl =
                             ]
                         )
                     , letDestructuring
-                        (tuplePattern [ varPattern "newPage", varPattern "newPageCmd" ])
+                        (tuplePattern
+                            [ varPattern "newPage"
+                            , varPattern "newPageCmd"
+                            , varPattern "newPageExternalCmd"
+                            ]
+                        )
                         (apply [ fqFun [ "Page" ] "enterRoute", val "bag", modelAccess "page", val "route" ])
                     ]
                     (tuple
@@ -232,6 +238,7 @@ updateDecl =
                             ]
                         , cmdBatch
                             [ cmdMap "PageMsg" (val "newPageCmd")
+                            , cmdMap "PageExternalMsg" (val "newPageExternalCmd")
                             ]
                         ]
                     )
@@ -245,7 +252,12 @@ updateDecl =
                             ]
                         )
                     , letDestructuring
-                        (tuplePattern [ varPattern "newPage", varPattern "newPageCmd" ])
+                        (tuplePattern
+                            [ varPattern "newPage"
+                            , varPattern "newPageCmd"
+                            , varPattern "newPageExternalCmd"
+                            ]
+                        )
                         (apply [ fqFun [ "Page" ] "update", val "bag", val "subMsg", modelAccess "page" ])
                     ]
                     (tuple
@@ -254,9 +266,16 @@ updateDecl =
                             ]
                         , cmdBatch
                             [ cmdMap "PageMsg" (val "newPageCmd")
+                            , cmdMap "PageExternalMsg" (val "newPageExternalCmd")
                             ]
                         ]
                     )
+              )
+            , ( namedPattern "PageExternalMsg" [ varPattern "subMsg" ]
+              , tuple
+                    [ val "model"
+                    , cmdNone
+                    ]
               )
             ]
         )
