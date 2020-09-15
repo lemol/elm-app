@@ -3,7 +3,15 @@ module Utils exposing (clearModuleNodeRange, clearViewNodeRange)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range as Range
 import Elm.Syntax.TypeAnnotation exposing (..)
-import ElmApp.Module exposing (Init(..), Module, Subscriptions(..), Update(..), View(..))
+import ElmApp.Module
+    exposing
+        ( Init(..)
+        , Module
+        , Params(..)
+        , Subscriptions(..)
+        , Update(..)
+        , View(..)
+        )
 
 
 clearModuleNodeRange : Module -> Module
@@ -11,12 +19,27 @@ clearModuleNodeRange mod =
     { name = mod.name
     , imports = mod.imports -- |> clearImportsNodeRange
     , model = mod.model -- |> clearModelNodeRange
+    , params = mod.params |> clearParamsNodeRange
     , init = mod.init |> clearInitNodeRange
     , msg = mod.msg -- |> clearMsgNodeRange
     , update = mod.update |> clearUpdateNodeRange
     , subscriptions = mod.subscriptions |> clearSubscriptionsNodeRange
     , view = mod.view |> clearViewNodeRange
     }
+
+
+
+-- CLEAN NODE RANGE
+
+
+clearParamsNodeRange : Params -> Params
+clearParamsNodeRange params =
+    case params of
+        Params0 ->
+            params
+
+        Params1 n ta ->
+            Params1 n (clearTypeAnnotationNodeRange ta)
 
 
 clearInitNodeRange : Init -> Init
@@ -90,10 +113,27 @@ clearTypeAnnotationNodeRange : TypeAnnotation -> TypeAnnotation
 clearTypeAnnotationNodeRange ta =
     case ta of
         Typed x list ->
-            Typed (clearNodeRange x) (List.map (clearNodeRange >> Node.map clearTypeAnnotationNodeRange) list)
+            list
+                |> List.map (clearNodeRange >> Node.map clearTypeAnnotationNodeRange)
+                |> Typed (clearNodeRange x)
 
         Tupled list ->
-            Tupled (List.map (clearNodeRange >> Node.map clearTypeAnnotationNodeRange) list)
+            list
+                |> List.map (clearNodeRange >> Node.map clearTypeAnnotationNodeRange)
+                |> Tupled
+
+        Record list ->
+            list
+                |> List.map
+                    (clearNodeRange
+                        >> Node.map
+                            (Tuple.mapBoth
+                                clearNodeRange
+                                clearNodeRange
+                                >> Tuple.mapSecond (Node.map clearTypeAnnotationNodeRange)
+                            )
+                    )
+                |> Record
 
         _ ->
             ta

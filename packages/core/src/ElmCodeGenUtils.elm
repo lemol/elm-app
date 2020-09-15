@@ -1,10 +1,12 @@
-module ElmCodeGenUtils exposing (functionDeclaration, functionExposed, functionExposedOneOf, moduleDeclarations, moduleDefinition, typeExposed, typeSimple, typedConcreteSimple, typedGeneric)
+module ElmCodeGenUtils exposing (functionDeclaration, functionExposed, functionExposedOneOf, moduleDeclarations, moduleDefinition, recordTypeAliasDeclaration, typeAliasDeclaration, typeExposed, typeSimple, typedConcreteSimple, typedGeneric)
 
 import Elm.CodeGen exposing (..)
 import Elm.Syntax.Declaration as Declaration
 import Elm.Syntax.Exposing exposing (Exposing(..), TopLevelExpose(..))
 import Elm.Syntax.Expression exposing (Function)
 import Elm.Syntax.Node as Node
+import Elm.Syntax.TypeAlias exposing (TypeAlias)
+import Elm.Syntax.TypeAnnotation as TypeAnnotation
 import List.Extra
 
 
@@ -115,4 +117,47 @@ functionDeclaration name declarations =
         |> List.Extra.find
             (\x ->
                 functionName x == name
+            )
+
+
+
+-- TYPE ALIAS
+
+
+typeAliasDeclarations : List Declaration.Declaration -> List TypeAlias
+typeAliasDeclarations declarations =
+    declarations
+        |> List.filterMap
+            (\x ->
+                case x of
+                    Declaration.AliasDeclaration y ->
+                        Just y
+
+                    _ ->
+                        Nothing
+            )
+
+
+typeAliasDeclaration : String -> List Declaration.Declaration -> Maybe TypeAlias
+typeAliasDeclaration name declarations =
+    declarations
+        |> typeAliasDeclarations
+        |> List.Extra.find
+            (\x ->
+                Node.value x.name == name
+            )
+
+
+recordTypeAliasDeclaration : String -> List Declaration.Declaration -> Maybe TypeAnnotation
+recordTypeAliasDeclaration name declarations =
+    typeAliasDeclaration name declarations
+        |> Maybe.map (.typeAnnotation >> Node.value)
+        |> Maybe.andThen
+            (\ann ->
+                case ann of
+                    TypeAnnotation.Record _ ->
+                        Just ann
+
+                    _ ->
+                        Nothing
             )

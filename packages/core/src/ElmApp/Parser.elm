@@ -6,8 +6,18 @@ import Elm.Syntax.Module as ESModule
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.TypeAnnotation exposing (TypeAnnotation(..))
 import ElmApp.Error exposing (Error(..))
-import ElmApp.Module as Module exposing (Init(..), Model(..), Module, Msg(..), Subscriptions(..), Update(..), View(..))
-import ElmCodeGenUtils exposing (functionDeclaration, functionExposed, functionExposedOneOf, moduleDeclarations, moduleDefinition, typeExposed)
+import ElmApp.Module as Module
+    exposing
+        ( Init(..)
+        , Model(..)
+        , Module
+        , Msg(..)
+        , Params(..)
+        , Subscriptions(..)
+        , Update(..)
+        , View(..)
+        )
+import ElmCodeGenUtils exposing (functionDeclaration, functionExposed, functionExposedOneOf, moduleDeclarations, moduleDefinition, recordTypeAliasDeclaration, typeAliasDeclaration, typeExposed)
 import Maybe.Extra
 import Parser
 
@@ -68,6 +78,7 @@ parseModule source =
     Elm.DSLParser.parse source
         |> initContext
         |> andThen parseModel
+        |> andThen parseParams
         |> andThen parseInit
         |> andThen parseMsg
         |> andThen parseUpdate
@@ -89,7 +100,7 @@ parseModel { file, result } =
                 |> ESModule.exposingList
                 |> typeExposed "Model"
 
-        model =
+        found =
             if exposed then
                 Model1 "Model"
 
@@ -97,7 +108,39 @@ parseModel { file, result } =
                 Model0
     in
     result
-        |> Module.withModel model
+        |> Module.withModel found
+        |> Ok
+
+
+
+-- PARAMS
+
+
+parseParams : ParserContext -> Result Error Module
+parseParams { file, result } =
+    let
+        exposed =
+            file
+                |> moduleDefinition
+                |> ESModule.exposingList
+                |> typeExposed "Params"
+
+        declaration =
+            file
+                |> moduleDeclarations
+                |> recordTypeAliasDeclaration "Params"
+                |> Maybe.map (Params1 "Params")
+                |> Maybe.withDefault Params0
+
+        found =
+            if exposed then
+                declaration
+
+            else
+                Params0
+    in
+    result
+        |> Module.withParams found
         |> Ok
 
 

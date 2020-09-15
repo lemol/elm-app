@@ -1,4 +1,4 @@
-module Spa.Fixtures.BasicPages exposing (..)
+module Spa.Fixtures.BasicPagesWithParams exposing (..)
 
 
 pages :
@@ -56,20 +56,38 @@ view =
 
 about : String
 about =
-    """module Pages.About exposing (view)
+    """module Pages.About exposing (Params, view)
 
 import App.Pages exposing (AppUrls, urlString)
 import Html exposing (Html, a, div, h1, text)
 import Html.Attributes exposing (href)
 
+type alias Params =
+    { countryId : String
+    , userId : String
+    }
 
-view : { urls : AppUrls } -> Html msg
+view :
+    { params : Params
+    , urls : AppUrls
+    }
+    -> Html msg
 view =
     div
         []
         [ h1
             []
             [ text "About Page" ]
+        , div
+            []
+            [ text "countryId: "
+            , text params.countryId
+            ]
+        , div
+            []
+            [ text "userId: "
+            , text params.userId
+            ]
         , div
             []
             [ a
@@ -185,7 +203,7 @@ view model =
 
 counterAsync : String
 counterAsync =
-    """module Pages.CounterAsync exposing (Model, Msg, init, subscriptions, update, view)
+    """module Pages.CounterAsync exposing (Model, Msg, Params, init, subscriptions, update, view)
 
 import App.Pages exposing (AppUrls, urlString)
 import Html exposing (Html, a, button, div, h1, text)
@@ -202,9 +220,15 @@ type alias Model =
     Int
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( 0
+type alias Params =
+    { name : String
+    , initial : Int
+    }
+
+
+init : { params : Params } -> ( Model, Cmd Msg )
+init { params } =
+    ( params.initial
     , Cmd.none
     )
 
@@ -245,13 +269,18 @@ subscriptions _ =
 -- VIEW
 
 
-view : { urls : AppUrls } -> Model -> Html Msg
-view model =
+view :
+    { params : Params
+    , urls : AppUrls
+    }
+    -> Model
+    -> Html Msg
+view { params, urls } model =
     div
         []
         [ h1
             []
-            [ text "Index Page" ]
+            [ text ("Name from params = " ++ params.name) ]
         , div
             []
             [ a

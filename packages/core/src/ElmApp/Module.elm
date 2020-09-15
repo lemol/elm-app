@@ -4,16 +4,19 @@ module ElmApp.Module exposing
     , Module
     , Msg(..)
     , Name
+    , Params(..)
     , Subscriptions(..)
     , Update(..)
     , View(..)
     , build
     , encodeView
     , modelAnn
+    , paramsAnn
     , withImports
     , withInit
     , withModel
     , withMsg
+    , withParams
     , withSubscriptions
     , withUpdate
     , withView
@@ -28,6 +31,7 @@ type alias Module =
     { name : ModuleName
     , imports : List Import
     , model : Model
+    , params : Params
     , init : Init
     , msg : Msg
     , update : Update
@@ -43,6 +47,11 @@ type alias Name =
 type Model
     = Model0 -- no Model
     | Model1 Name -- type Model
+
+
+type Params
+    = Params0 -- no Params
+    | Params1 Name TypeAnnotation -- type alias Params = {..record..}
 
 
 type Init
@@ -101,6 +110,7 @@ build name =
     { name = name
     , imports = []
     , model = Model0
+    , params = Params0
     , init = Init0
     , msg = Msg0
     , update = Update0
@@ -117,6 +127,11 @@ withImports imports mod =
 withModel : Model -> Module -> Module
 withModel model mod =
     { mod | model = model }
+
+
+withParams : Params -> Module -> Module
+withParams params mod =
+    { mod | params = params }
 
 
 withInit : Init -> Module -> Module
@@ -144,12 +159,37 @@ withView view mod =
     { mod | view = view }
 
 
+
+-- TYPEANNOTATIONS
+
+
 modelAnn : Module -> Maybe TypeAnnotation
 modelAnn module_ =
     case module_.model of
-        Model1 modelName ->
-            fqTyped module_.name modelName []
+        Model1 name ->
+            fqTyped module_.name name []
                 |> Just
 
         Model0 ->
+            Nothing
+
+
+paramsAnn : Module -> Maybe TypeAnnotation
+paramsAnn module_ =
+    case module_.params of
+        Params1 name _ ->
+            fqTyped module_.name name []
+                |> Just
+
+        Params0 ->
+            Nothing
+
+
+paramsRecordAnn : Module -> Maybe TypeAnnotation
+paramsRecordAnn module_ =
+    case module_.params of
+        Params1 _ rec ->
+            Just rec
+
+        Params0 ->
             Nothing

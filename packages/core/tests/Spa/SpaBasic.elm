@@ -12,6 +12,7 @@ import Spa.Fixtures.BasicPages.MainModule as MainModule
 import Spa.Fixtures.BasicPages.PagesModule as PagesModule
 import Spa.Fixtures.BasicPages.Pages_Internal_Page as Pages_Internal_Page
 import Spa.Fixtures.BasicPages.RouterModule as RouterModule
+import Spa.Fixtures.BasicPagesWithParams as BasicPagesWithParams
 import Test exposing (..)
 
 
@@ -71,6 +72,7 @@ suite =
                     |> Expect.err
         , basicSuite "simple pages"
             configSimple
+            BasicPages.pages
             { main_elm = MainModule.content
             , pages_elm = PagesModule.contentSimple
             , pages_internal_router_elm = RouterModule.contentSimple
@@ -78,10 +80,11 @@ suite =
             }
         , basicSuite "with route params"
             configWithRouteParams
+            BasicPagesWithParams.pages
             { main_elm = MainModule.content
             , pages_elm = PagesModule.contentWithRouteParams
             , pages_internal_router_elm = RouterModule.contentWithRouteParams
-            , pages_internal_page_elm = Pages_Internal_Page.contentSimple
+            , pages_internal_page_elm = Pages_Internal_Page.contentWithRouteParams
             }
         ]
 
@@ -90,40 +93,54 @@ basicSuite :
     String
     -> Json.Value
     ->
+        { index : String
+        , about : String
+        , counter : String
+        , counterAsync : String
+        }
+    ->
         { main_elm : String
         , pages_elm : String
         , pages_internal_router_elm : String
         , pages_internal_page_elm : String
         }
     -> Test
-basicSuite name config content =
+basicSuite name config pages content =
     describe name
         [ test "should generate the App/Main.elm file" <|
             \_ ->
-                justGetFile config "App/Main.elm"
+                justGetFile config pages "App/Main.elm"
                     |> Expect.equal (Ok content.main_elm)
         , test "should generate the App/Pages.elm file" <|
             \_ ->
-                justGetFile config "App/Pages.elm"
+                justGetFile config pages "App/Pages.elm"
                     |> Expect.equal (Ok content.pages_elm)
         , test "should generate the App/Pages/Internal/Router.elm file" <|
             \_ ->
-                justGetFile config "App/Pages/Internal/Router.elm"
+                justGetFile config pages "App/Pages/Internal/Router.elm"
                     |> Expect.equal (Ok content.pages_internal_router_elm)
         , test "should generate the App/Pages/Internal/Page.elm file" <|
             \_ ->
-                justGetFile config "App/Pages/Internal/Page.elm"
+                justGetFile config pages "App/Pages/Internal/Page.elm"
                     |> Expect.equal (Ok content.pages_internal_page_elm)
         ]
 
 
-context : Json.Value -> Result Error Context
-context config =
+context :
+    Json.Value
+    ->
+        { index : String
+        , about : String
+        , counter : String
+        , counterAsync : String
+        }
+    -> Result Error Context
+context config pages =
     Spa.initDecodingConfig config
-        |> Spa.addPage BasicPages.about
-        |> Spa.addPage BasicPages.counter
-        |> Spa.addPage BasicPages.counterAsync
-        |> Spa.addPage BasicPages.index
+        |> Spa.addPage pages.about
+        |> Spa.addPage pages.counter
+        |> Spa.addPage pages.counterAsync
+        |> Spa.addPage pages.index
         |> Spa.build
 
 
@@ -142,8 +159,17 @@ getFile name =
         )
 
 
-justGetFile : Json.Value -> String -> Result Error String
-justGetFile config name =
-    context config
+justGetFile :
+    Json.Value
+    ->
+        { index : String
+        , about : String
+        , counter : String
+        , counterAsync : String
+        }
+    -> String
+    -> Result Error String
+justGetFile config pages name =
+    context  config pages
         |> result
         |> getFile name

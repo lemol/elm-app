@@ -52,7 +52,8 @@ pageLoadedTypeDecl opts =
             ( Route.name route
             , [ Module.modelAnn (Route.module_ route)
                     |> Maybe.withDefault unitAnn
-              , unitAnn
+              , Module.paramsAnn (Route.module_ route)
+                    |> Maybe.withDefault unitAnn
               ]
             )
     in
