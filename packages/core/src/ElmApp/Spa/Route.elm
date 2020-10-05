@@ -8,6 +8,7 @@ module ElmApp.Spa.Route exposing
     , layouts
     , module_
     , name
+    , notFoundRoute
     , params
     , parsePath
     , part
@@ -62,6 +63,16 @@ type Route
 create : Internal -> Route
 create =
     Route
+
+
+notFoundRoute : Module -> Route
+notFoundRoute module__ =
+    create
+        { path = Parts [ Part "404" ]
+        , name = "NotFound"
+        , module_ = module__
+        , layouts = []
+        }
 
 
 path : Route -> Path

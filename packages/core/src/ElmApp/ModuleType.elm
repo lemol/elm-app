@@ -144,5 +144,8 @@ viewName { view } =
         View_Model_Document name _ _ ->
             Ok name
 
+        View_Bag_Document name _ _ ->
+            Ok name
+
         View_Bag_Model_Document name _ _ _ ->
             Ok name

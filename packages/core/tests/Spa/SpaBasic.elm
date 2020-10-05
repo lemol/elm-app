@@ -10,6 +10,7 @@ import List.Extra
 import Spa.Fixtures.BasicPages as BasicPages
 import Spa.Fixtures.BasicPages.Main_Elm as Main_Elm
 import Spa.Fixtures.BasicPages.Pages_Elm as Pages_Elm
+import Spa.Fixtures.BasicPages.Pages_Internal_Main_Elm as Pages_Internal_Main_Elm
 import Spa.Fixtures.BasicPages.Pages_Internal_Page_Elm as Pages_Internal_Page_Elm
 import Spa.Fixtures.BasicPages.Pages_Internal_Router_Elm as Pages_Internal_Router_Elm
 import Spa.Fixtures.BasicPagesWithParams as BasicPagesWithParams
@@ -77,6 +78,7 @@ suite =
             , pages_elm = Pages_Elm.contentSimple
             , pages_internal_router_elm = Pages_Internal_Router_Elm.contentSimple
             , pages_internal_page_elm = Pages_Internal_Page_Elm.contentSimple
+            , pages_internal_main_elm = Pages_Internal_Main_Elm.contentSimple
             }
         , basicSuite "with route params"
             configWithRouteParams
@@ -85,6 +87,7 @@ suite =
             , pages_elm = Pages_Elm.contentWithRouteParams
             , pages_internal_router_elm = Pages_Internal_Router_Elm.contentWithRouteParams
             , pages_internal_page_elm = Pages_Internal_Page_Elm.contentWithRouteParams
+            , pages_internal_main_elm = Pages_Internal_Main_Elm.contentSimple
             }
         ]
 
@@ -103,6 +106,7 @@ basicSuite :
         , pages_elm : String
         , pages_internal_router_elm : String
         , pages_internal_page_elm : String
+        , pages_internal_main_elm : String
         }
     -> Test
 basicSuite name config pages content =
@@ -123,6 +127,10 @@ basicSuite name config pages content =
             \_ ->
                 justGetFile config pages "App/Pages/Internal/Page.elm"
                     |> Expect.equal (Ok content.pages_internal_page_elm)
+        , test "should generate the App/Pages/Internal/Main.elm file" <|
+            \_ ->
+                justGetFile config pages "App/Pages/Internal/Main.elm"
+                    |> Expect.equal (Ok content.pages_internal_main_elm)
         ]
 
 
@@ -141,6 +149,7 @@ context config pages =
         |> Spa.addPage pages.counter
         |> Spa.addPage pages.counterAsync
         |> Spa.addPage pages.index
+        |> Spa.withNotFoundModule notFoundModule
         |> Spa.build
 
 
@@ -173,3 +182,16 @@ justGetFile config pages name =
     context config pages
         |> result
         |> getFile name
+
+
+notFoundModule : String
+notFoundModule =
+    """module App.Pages.Internal.NotFound exposing (view)
+
+import Html exposing (Html, text)
+
+
+view : Html msg
+view =
+    text "NotFound"
+"""

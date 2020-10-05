@@ -89,6 +89,9 @@ clearViewNodeRange view =
         View_Model_Document n ta1 ta2 ->
             View_Model_Document n (clearTypeAnnotationNodeRange ta1) (clearTypeAnnotationNodeRange ta2)
 
+        View_Bag_Document n ta1 ta2 ->
+            View_Bag_Document n (clearTypeAnnotationNodeRange ta1) (clearTypeAnnotationNodeRange ta2)
+
         View_Bag_Model_Document n ta1 ta2 ta3 ->
             View_Bag_Model_Document n (clearTypeAnnotationNodeRange ta1) (clearTypeAnnotationNodeRange ta2) (clearTypeAnnotationNodeRange ta3)
 

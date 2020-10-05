@@ -368,8 +368,19 @@ fromViewDeclaration name ann =
         Typed doc vars ->
             View_Document name (Typed doc vars)
 
-        FunctionTypeAnnotation model (Node _ (Typed doc vars)) ->
-            View_Model_Document name (Node.value model) (Typed doc vars)
+        FunctionTypeAnnotation (Node _ modelOrBag) (Node _ (Typed doc vars)) ->
+            case modelOrBag of
+                Typed (Node _ ( _, "Model" )) [] ->
+                    View_Model_Document name modelOrBag (Typed doc vars)
+
+                Record _ ->
+                    View_Bag_Document name modelOrBag (Typed doc vars)
+
+                _ ->
+                    View0
+
+        FunctionTypeAnnotation (Node _ bag) (Node _ (FunctionTypeAnnotation (Node _ model) (Node _ (Typed doc vars)))) ->
+            View_Bag_Model_Document name bag model (Typed doc vars)
 
         _ ->
             View0

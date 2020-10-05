@@ -1,10 +1,11 @@
-module ElmCodeGenUtils exposing (functionDeclaration, functionExposed, functionExposedOneOf, moduleDeclarations, moduleDefinition, recordTypeAliasDeclaration, typeAliasDeclaration, typeExposed, typeSimple, typedConcreteSimple, typedGeneric)
+module ElmCodeGenUtils exposing (functionDeclaration, functionExposed, functionExposedOneOf, moduleDeclarations, moduleDefinition, recordDefinitionFields, recordDefinitionFieldsTA, recordTypeAliasDeclaration, typeAliasDeclaration, typeExposed, typeSimple, typedConcreteSimple, typedGeneric)
 
 import Elm.CodeGen exposing (..)
 import Elm.Syntax.Declaration as Declaration
 import Elm.Syntax.Exposing exposing (Exposing(..), TopLevelExpose(..))
 import Elm.Syntax.Expression exposing (Function)
 import Elm.Syntax.Node as Node
+import Elm.Syntax.Type exposing (Type)
 import Elm.Syntax.TypeAlias exposing (TypeAlias)
 import Elm.Syntax.TypeAnnotation as TypeAnnotation
 import List.Extra
@@ -161,3 +162,19 @@ recordTypeAliasDeclaration name declarations =
                     _ ->
                         Nothing
             )
+
+
+recordDefinitionFields : TypeAnnotation.RecordDefinition -> List String
+recordDefinitionFields =
+    List.map (Node.value >> Tuple.first >> Node.value)
+
+
+recordDefinitionFieldsTA : TypeAnnotation -> Maybe (List String)
+recordDefinitionFieldsTA ta =
+    case ta of
+        TypeAnnotation.Record rd ->
+            recordDefinitionFields rd
+                |> Just
+
+        _ ->
+            Nothing

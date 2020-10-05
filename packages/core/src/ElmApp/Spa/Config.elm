@@ -3,6 +3,10 @@ module ElmApp.Spa.Config exposing
     , DocumentInfo(..)
     , configDecoder
     , default
+    , documentMap
+    , documentModuleName
+    , documentToBrowser
+    , documentTypeName
     , updateRouteModule
     )
 
@@ -91,6 +95,56 @@ documentInfoDecoder =
         ]
 
 
+
+-- DOCUMENT
+
+
 defaultDocument : DocumentInfo
 defaultDocument =
     DocumentModule [ "Html" ]
+
+
+documentModuleName : DocumentInfo -> List String
+documentModuleName doc =
+    case doc of
+        DocumentModule modName ->
+            modName
+
+        DocumentModuleCustom modName _ _ _ ->
+            modName
+
+
+documentTypeName : DocumentInfo -> String
+documentTypeName doc =
+    case doc of
+        DocumentModule _ ->
+            "Document"
+
+        DocumentModuleCustom _ typeName _ _ ->
+            typeName
+
+
+documentMap : DocumentInfo -> ( List String, String )
+documentMap doc =
+    case doc of
+        DocumentModule [ "Html" ] ->
+            ( [], "htmlDocumentMap" )
+
+        DocumentModule _ ->
+            ( documentModuleName doc, "map" )
+
+        DocumentModuleCustom _ _ mapName _ ->
+            ( documentModuleName doc, mapName )
+
+
+documentToBrowser : DocumentInfo -> ( List String, String )
+documentToBrowser doc =
+    case doc of
+        DocumentModule [ "Html" ] ->
+            ( [], "identity" )
+
+        DocumentModule _ ->
+            ( documentModuleName doc, "toBrowserDocument" )
+
+        DocumentModuleCustom _ _ _ toBrowser ->
+            ( documentModuleName doc, toBrowser )

@@ -19,9 +19,10 @@ import ElmApp.Module exposing (Module)
 import ElmApp.ModuleType exposing (ModuleType(..))
 import ElmApp.Parser as Parser
 import ElmApp.Spa.Config as Config exposing (Config)
-import ElmApp.Spa.Route as Route
+import ElmApp.Spa.Route as Route exposing (Route)
 import ElmApp.Spa.Writers.Main_Elm as Main_Elm
 import ElmApp.Spa.Writers.Pages_Elm as Pages_Elm
+import ElmApp.Spa.Writers.Pages_Internal_Main_Elm as Pages_Internal_Main_Elm
 import ElmApp.Spa.Writers.Pages_Internal_Page_Elm as Pages_Internal_Page_Elm
 import ElmApp.Spa.Writers.Pages_Internal_Router_Elm as Pages_Internal_Router_Elm
 import Json.Decode as Decode
@@ -167,6 +168,18 @@ contextErrors context =
             )
 
 
+allRoutes : Context -> List Route
+allRoutes context =
+    context.notFoundModule
+        |> Maybe.map
+            (\module_ ->
+                context.config.routes
+                    ++ [ Route.notFoundRoute module_
+                       ]
+            )
+        |> Maybe.withDefault context.config.routes
+
+
 write : Context -> Result Error (List ( String, String ))
 write context =
     let
@@ -190,11 +203,18 @@ write context =
                 { config = context.config
                 , pages = context.pages |> Dict.values
                 }
+
+        pagesInternalMainElm =
+            Pages_Internal_Main_Elm.write
+                { config = context.config
+                , routes = allRoutes context
+                }
     in
     [ ( "App/Main.elm", mainElm )
     , ( "App/Pages.elm", pagesElm )
     , ( "App/Pages/Internal/Router.elm", pagesInternalRouterElm )
     , ( "App/Pages/Internal/Page.elm", pagesInternalPageElm )
+    , ( "App/Pages/Internal/Main.elm", pagesInternalMainElm )
     ]
         |> writeAll
 

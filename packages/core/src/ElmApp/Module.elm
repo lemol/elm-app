@@ -8,10 +8,26 @@ module ElmApp.Module exposing
     , Subscriptions(..)
     , Update(..)
     , View(..)
+    , bagRecordExpr
     , build
     , encodeView
+    , hasModel
+    , hasParams
+    , initApply
+    , initApplyDestruct
+    , initHasCmd
     , modelAnn
+    , msgAnn
     , paramsAnn
+    , paramsLetDeclaration
+    , paramsRecordAnn
+    , subApply
+    , updateApplyDestruct
+    , updateHasCmd
+    , viewApply
+    , viewBagItems
+    , viewBagRecordExpr
+    , viewHasBag
     , withImports
     , withInit
     , withModel
@@ -22,9 +38,12 @@ module ElmApp.Module exposing
     , withView
     )
 
-import Elm.CodeGen exposing (Import, ModuleName, TypeAnnotation, fqTyped)
+import Elm.CodeGen exposing (Expression, Import, ModuleName, TypeAnnotation, access, apply, fqFun, fqTyped, letDestructuring, record, tuplePattern, unit, val, varPattern)
+import Elm.Syntax.Expression exposing (Expression, LetDeclaration(..))
 import Elm.Syntax.TypeAnnotation as TypeAnnotation
+import ElmCodeGenUtils exposing (recordDefinitionFields, recordDefinitionFieldsTA)
 import Json.Encode exposing (Value)
+import Maybe.Extra
 
 
 type alias Module =
@@ -88,6 +107,7 @@ type View
     = View0 -- no view
     | View_Document Name TypeAnnotation -- view : Html msg
     | View_Model_Document Name TypeAnnotation TypeAnnotation -- view : Model -> Html msg
+    | View_Bag_Document Name TypeAnnotation TypeAnnotation -- view : Bag -> Html msg
     | View_Bag_Model_Document Name TypeAnnotation TypeAnnotation TypeAnnotation -- view : Bag -> Model -> Html msg
 
 
@@ -99,6 +119,11 @@ encodeView v =
 
         _ ->
             Json.Encode.string "OK"
+
+
+type BagItem
+    = BagUrls
+    | BagRouter
 
 
 
@@ -163,6 +188,61 @@ withView view mod =
 -- TYPEANNOTATIONS
 
 
+hasModel : Module -> Bool
+hasModel =
+    modelAnn >> Maybe.Extra.isJust
+
+
+hasParams : Module -> Bool
+hasParams =
+    paramsAnn >> Maybe.Extra.isJust
+
+
+initHasCmd : Module -> Bool
+initHasCmd module_ =
+    case module_.init of
+        Init_ModelCmd _ _ ->
+            True
+
+        Init_Bag_ModelCmd _ _ _ ->
+            True
+
+        _ ->
+            False
+
+
+updateHasCmd : Module -> Bool
+updateHasCmd module_ =
+    case module_.update of
+        Update_Bag_Msg_Model_ModelCmd _ _ _ _ _ ->
+            True
+
+        Update_Bag_Msg_Model_ModelCmdExternal _ _ _ _ _ ->
+            True
+
+        Update_Msg_Model_ModelCmd _ _ _ _ ->
+            True
+
+        Update_Msg_Model_ModelCmdExternal _ _ _ _ ->
+            True
+
+        _ ->
+            False
+
+
+viewHasBag : Module -> Bool
+viewHasBag module_ =
+    case module_.view of
+        View_Bag_Document _ _ _ ->
+            True
+
+        View_Bag_Model_Document _ _ _ _ ->
+            True
+
+        _ ->
+            False
+
+
 modelAnn : Module -> Maybe TypeAnnotation
 modelAnn module_ =
     case module_.model of
@@ -192,4 +272,281 @@ paramsRecordAnn module_ =
             Just rec
 
         Params0 ->
+            Nothing
+
+
+msgAnn : Module -> Maybe TypeAnnotation
+msgAnn module_ =
+    case module_.msg of
+        Msg1 name ->
+            fqTyped module_.name name []
+                |> Just
+
+        Msg0 ->
+            Nothing
+
+
+initApply : Module -> Maybe Expression
+initApply module_ =
+    case module_.init of
+        Init_Model name _ ->
+            apply
+                [ fqFun module_.name name
+                ]
+                |> Just
+
+        Init_ModelCmd name _ ->
+            apply
+                [ fqFun module_.name name
+                ]
+                |> Just
+
+        Init0 ->
+            Just unit
+
+        _ ->
+            Nothing
+
+
+initApplyDestruct :
+    { model : String
+    , cmd : String
+    }
+    -> Module
+    -> Maybe LetDeclaration
+initApplyDestruct opts module_ =
+    case module_.init of
+        Init_Model name _ ->
+            letDestructuring (varPattern opts.model)
+                (apply
+                    [ fqFun module_.name name
+                    ]
+                )
+                |> Just
+
+        Init_ModelCmd name _ ->
+            letDestructuring
+                (tuplePattern
+                    [ varPattern opts.model
+                    , varPattern opts.cmd
+                    ]
+                )
+                (apply
+                    [ fqFun module_.name name
+                    ]
+                )
+                |> Just
+
+        Init0 ->
+            Nothing
+
+        _ ->
+            Nothing
+
+
+paramsLetDeclaration : Module -> Maybe LetDeclaration
+paramsLetDeclaration module_ =
+    case module_.params of
+        Params1 name (TypeAnnotation.Record paramsRecordDefs) ->
+            letDestructuring (varPattern name)
+                (recordDefinitionFields paramsRecordDefs
+                    |> List.map
+                        (\field ->
+                            ( field, access (val "params") field )
+                        )
+                    |> record
+                )
+                |> Just
+
+        Params0 ->
+            Nothing
+
+        _ ->
+            Nothing
+
+
+updateApplyDestruct :
+    { model : String
+    , cmd : String
+    , msgArg : String
+    , modelArg : String
+    }
+    -> Module
+    -> Maybe LetDeclaration
+updateApplyDestruct opts module_ =
+    case module_.update of
+        Update_Msg_Model_Model name _ _ _ ->
+            letDestructuring (varPattern opts.model)
+                (apply
+                    [ fqFun module_.name name
+                    , val opts.msgArg
+                    , val opts.modelArg
+                    ]
+                )
+                |> Just
+
+        Update_Msg_Model_ModelCmd name _ _ _ ->
+            letDestructuring
+                (tuplePattern
+                    [ varPattern opts.model
+                    , varPattern opts.cmd
+                    ]
+                )
+                (apply
+                    [ fqFun module_.name name
+                    , val opts.msgArg
+                    , val opts.modelArg
+                    ]
+                )
+                |> Just
+
+        Update0 ->
+            Nothing
+
+        _ ->
+            Nothing
+
+
+viewBagTA : Module -> Maybe TypeAnnotation
+viewBagTA module_ =
+    case module_.view of
+        View_Bag_Document _ bagTa _ ->
+            Just bagTa
+
+        View_Bag_Model_Document _ bagTa _ _ ->
+            Just bagTa
+
+        _ ->
+            Nothing
+
+
+viewBagItems : Module -> List BagItem
+viewBagItems =
+    viewBagTA
+        >> Maybe.andThen recordDefinitionFieldsTA
+        >> Maybe.withDefault []
+        >> List.filterMap bagItemFromString
+
+
+bagRecordExpr :
+    { urls : Expression
+    , router : Expression
+    }
+    -> List BagItem
+    -> Expression
+bagRecordExpr opts items =
+    items
+        |> List.map
+            (\item ->
+                ( bagItemString item
+                , case item of
+                    BagUrls ->
+                        opts.urls
+
+                    BagRouter ->
+                        opts.router
+                )
+            )
+        |> record
+
+
+viewBagRecordExpr :
+    { urls : Expression
+    , router : Expression
+    }
+    -> Module
+    -> Expression
+viewBagRecordExpr opts =
+    viewBagItems >> bagRecordExpr opts
+
+
+bagItemFromString : String -> Maybe BagItem
+bagItemFromString str =
+    case str of
+        "urls" ->
+            Just BagUrls
+
+        "router" ->
+            Just BagRouter
+
+        _ ->
+            Nothing
+
+
+bagItemString : BagItem -> String
+bagItemString bagItem =
+    case bagItem of
+        BagUrls ->
+            "urls"
+
+        BagRouter ->
+            "router"
+
+
+viewApply :
+    { model : Expression
+    , bag : Expression
+    }
+    -> Module
+    -> Maybe Expression
+viewApply opts module_ =
+    case module_.view of
+        View_Document name _ ->
+            fqFun module_.name name
+                |> Just
+
+        View_Bag_Document name _ _ ->
+            apply
+                [ fqFun module_.name name
+                , opts.bag
+                ]
+                |> Just
+
+        View_Model_Document name _ _ ->
+            apply
+                [ fqFun module_.name name
+                , opts.model
+                ]
+                |> Just
+
+        View_Bag_Model_Document name _ _ _ ->
+            apply
+                [ fqFun module_.name name
+                , opts.bag
+                , opts.model
+                ]
+                |> Just
+
+        View0 ->
+            Nothing
+
+
+subApply :
+    { model : Expression
+    , bag : Expression
+    }
+    -> Module
+    -> Maybe Expression
+subApply opts module_ =
+    case module_.subscriptions of
+        Subscriptions_Sub name _ ->
+            fqFun module_.name name
+                |> Just
+
+        Subscriptions_Model_Sub name _ _ ->
+            apply
+                [ fqFun module_.name name
+                , opts.model
+                ]
+                |> Just
+
+        Subscriptions_Bag_Model_Sub name _ _ _ ->
+            apply
+                [ fqFun module_.name name
+                , opts.bag
+                , opts.model
+                ]
+                |> Just
+
+        Subscriptions0 ->
             Nothing

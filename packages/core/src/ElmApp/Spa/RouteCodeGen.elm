@@ -40,6 +40,17 @@ routeUnconstructPattern route =
         |> namedPattern (Route.name route)
 
 
+fqRouteUnconstructPattern : List String -> Route -> Pattern
+fqRouteUnconstructPattern modName route =
+    let
+        paramToPattern ( _, paramName ) =
+            varPattern paramName
+    in
+    Route.params route
+        |> List.map paramToPattern
+        |> namedPattern (modName ++ [ Route.name route ] |> String.join ".")
+
+
 routeUrlParserPath : Route -> Expression
 routeUrlParserPath route =
     case Route.path route of

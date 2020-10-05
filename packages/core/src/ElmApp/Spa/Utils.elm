@@ -3,7 +3,7 @@ module ElmApp.Spa.Utils exposing (..)
 import Elm.CodeGen exposing (..)
 import Elm.Syntax.Expression as Expression
 import Elm.Syntax.Infix as Infix
-import Elm.Syntax.Node as Node exposing (Node(..))
+import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Range as Range
 
 
@@ -24,6 +24,23 @@ flagsTA =
 msgTA : TypeAnnotation
 msgTA =
     typed "Msg" []
+
+
+modelCmdMsgTA : TypeAnnotation
+modelCmdMsgTA =
+    tupleAnn
+        [ typed "Model" []
+        , typed "Cmd" [ typed "Msg" [] ]
+        ]
+
+
+modelCmdMsgExternalTA : TypeAnnotation
+modelCmdMsgExternalTA =
+    tupleAnn
+        [ typed "Model" []
+        , typed "Cmd" [ typed "Msg" [] ]
+        , typed "Cmd" [ typed "ExternalMsg" [] ]
+        ]
 
 
 
@@ -103,6 +120,11 @@ subBatch items =
         ]
 
 
+subNone : Expression
+subNone =
+    fqVal [ "Sub" ] "none"
+
+
 
 -- MODEL
 
@@ -115,6 +137,11 @@ modelAccess =
 modelVal : Expression
 modelVal =
     val "model"
+
+
+bagVal : Expression
+bagVal =
+    val "bag"
 
 
 msgVal : Expression

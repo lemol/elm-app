@@ -210,12 +210,9 @@ updateDecl =
             , ( namedPattern "UrlChanged" [ varPattern "url" ]
               , letExpr
                     [ letFunction "router" [] (modelAccess "router")
-                    , letFunction "route"
-                        []
-                        (apply [ fun "parseUrl", val "url" ])
                     , letFunction "newRouter"
                         []
-                        (update "router" [ ( "route", val "route" ) ])
+                        (update "router" [ ( "route", apply [ fun "parseUrl", val "url" ] ) ])
                     , letFunction "bag"
                         []
                         (record
@@ -229,7 +226,7 @@ updateDecl =
                             , varPattern "newPageExternalCmd"
                             ]
                         )
-                        (apply [ fqFun [ "Page" ] "enterRoute", val "bag", modelAccess "page", val "route" ])
+                        (apply [ fqFun [ "Page" ] "enterRoute", val "bag", modelAccess "page" ])
                     ]
                     (tuple
                         [ update "model"

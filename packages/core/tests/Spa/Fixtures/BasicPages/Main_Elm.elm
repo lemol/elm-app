@@ -77,17 +77,14 @@ update msg model =
                 router =
                     model.router
 
-                route =
-                    parseUrl url
-
                 newRouter =
-                    { router | route = route }
+                    { router | route = parseUrl url }
 
                 bag =
                     { router = newRouter }
 
                 ( newPage, newPageCmd, newPageExternalCmd ) =
-                    Page.enterRoute bag model.page route
+                    Page.enterRoute bag model.page
             in
             ( { model | page = newPage, router = newRouter }
             , Cmd.batch [ Cmd.map PageMsg newPageCmd, Cmd.map PageExternalMsg newPageExternalCmd ]
